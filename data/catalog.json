@@ -1,0 +1,159 @@
+{
+  "currency": "EUR",
+  "note": "Demo prices for the concept prototype. Edit freely; the agent and the page only ever use the numbers in this file.",
+  "items": [
+    {
+      "sku": "plan-premium",
+      "name": "Premium Web Hosting",
+      "kind": "plan",
+      "tier": 1,
+      "prices": { "12": 3.99, "24": 2.99, "48": 2.49 },
+      "renewal": 8.99,
+      "limits": { "websites": 3, "storageGb": 20, "visitsMonthly": 25000, "aiCreditsMonthly": 0 },
+      "features": { "cdn": false, "dailyBackups": false },
+      "includes": ["3 websites", "20 GB storage", "~25,000 visits/month", "Free domain for the 1st year", "1 free mailbox for the 1st year", "Weekly backups", "Free SSL"]
+    },
+    {
+      "sku": "plan-business",
+      "name": "Business Web Hosting",
+      "kind": "plan",
+      "tier": 2,
+      "prices": { "12": 4.99, "24": 3.99, "48": 3.49 },
+      "renewal": 13.99,
+      "limits": { "websites": 50, "storageGb": 50, "visitsMonthly": 100000, "aiCreditsMonthly": 100 },
+      "features": { "cdn": true, "dailyBackups": true },
+      "includes": ["50 websites", "50 GB storage", "~100,000 visits/month", "Free CDN (faster pages worldwide)", "Daily backups", "2x CPU and RAM vs Premium", "100 AI credits every month"]
+    },
+    {
+      "sku": "plan-cloud",
+      "name": "Cloud Startup",
+      "kind": "plan",
+      "tier": 3,
+      "prices": { "12": 9.99, "24": 8.99, "48": 7.99 },
+      "renewal": 25.99,
+      "limits": { "websites": 100, "storageGb": 100, "visitsMonthly": 200000, "aiCreditsMonthly": 250 },
+      "features": { "cdn": true, "dailyBackups": true },
+      "includes": ["100 websites", "100 GB NVMe storage", "~200,000 visits/month", "Dedicated resources", "Free CDN", "Daily backups", "250 AI credits every month"]
+    },
+    {
+      "sku": "renew-plan",
+      "name": "Renew your hosting plan early",
+      "kind": "renewal",
+      "description": "Extends the current plan at today's price for the chosen term. Longer terms cost less per month."
+    },
+    {
+      "sku": "autorenew-on",
+      "name": "Turn on auto-renew",
+      "kind": "setting",
+      "price": 0,
+      "description": "Renews the plan automatically with the saved card so the sites never go offline."
+    },
+    {
+      "sku": "domain-free",
+      "name": "Free domain (included with your plan)",
+      "kind": "domain",
+      "price": 0,
+      "renewal": 15.99,
+      "renewalPeriod": "year",
+      "requires": "freeDomain",
+      "description": "One .com, .net or .online domain free for the first year, then 15.99/year."
+    },
+    {
+      "sku": "domain-com",
+      "name": ".com domain",
+      "kind": "domain",
+      "price": 9.99,
+      "renewal": 15.99,
+      "renewalPeriod": "year",
+      "description": "First year price, includes free WHOIS privacy."
+    },
+    {
+      "sku": "domain-connect",
+      "name": "Connect a domain you own to a website",
+      "kind": "service",
+      "price": 0,
+      "description": "Points the domain at the website and issues a free SSL certificate."
+    },
+    {
+      "sku": "site-publish",
+      "name": "Publish website",
+      "kind": "service",
+      "price": 0,
+      "description": "Makes a draft website live."
+    },
+    {
+      "sku": "email-free",
+      "name": "Free business mailbox (included with your plan)",
+      "kind": "email",
+      "price": 0,
+      "renewal": 1.99,
+      "renewalPeriod": "month",
+      "requires": "freeEmail",
+      "description": "1 mailbox on your own domain, free for the first year."
+    },
+    {
+      "sku": "email-business",
+      "name": "Business Email (per mailbox)",
+      "kind": "email",
+      "prices": { "12": 1.89 },
+      "renewal": 2.99,
+      "description": "10 GB mailbox on your own domain."
+    },
+    {
+      "sku": "email-ai",
+      "name": "Business Email with AI (per mailbox)",
+      "kind": "email",
+      "prices": { "12": 2.99 },
+      "renewal": 4.99,
+      "description": "Mailbox plus AI that drafts replies and sorts your inbox."
+    },
+    {
+      "sku": "cdn-enable",
+      "name": "Turn on CDN",
+      "kind": "feature",
+      "price": 0,
+      "requiresFeature": "cdn",
+      "description": "Serves the site from servers near each visitor. Included in Business and Cloud plans."
+    },
+    {
+      "sku": "backups-daily",
+      "name": "Daily backups add-on",
+      "kind": "addon",
+      "prices": { "12": 1.49 },
+      "renewal": 2.49,
+      "description": "A backup every day, kept for 14 days. Already included in Business and Cloud plans."
+    },
+    {
+      "sku": "ai-credits-100",
+      "name": "100 AI credits",
+      "kind": "credits",
+      "price": 9.99,
+      "credits": 100,
+      "description": "Credits for the AI website builder, AI agents and AI email."
+    },
+    {
+      "sku": "ai-credits-500",
+      "name": "500 AI credits",
+      "kind": "credits",
+      "price": 39.99,
+      "credits": 500,
+      "description": "Best value pack: 20% cheaper per credit than the 100 pack."
+    },
+    {
+      "sku": "email-marketing",
+      "name": "Email marketing Starter",
+      "kind": "addon",
+      "prices": { "12": 0 },
+      "renewal": 9.99,
+      "description": "Newsletters and automations for up to 1,000 contacts. Free for the first year."
+    },
+    {
+      "sku": "vps-kvm2",
+      "name": "VPS KVM 2 (2 vCPU, 8 GB RAM, 100 GB NVMe)",
+      "kind": "server",
+      "prices": { "12": 6.99, "24": 5.99 },
+      "renewal": 13.99,
+      "description": "Your own server for apps, automations (n8n) and AI agents."
+    }
+  ]
+}

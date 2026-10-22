@@ -1,0 +1,51 @@
+{
+  "id": "tom",
+  "label": "Tom — new customer, day 2",
+  "customer": {
+    "firstName": "Tom",
+    "customerSinceMonths": 0,
+    "card": "Mastercard •• 8810"
+  },
+  "plan": {
+    "sku": "plan-premium",
+    "termMonths": 48,
+    "monthlyPrice": 2.49,
+    "renewsInDays": 1458,
+    "autoRenew": true
+  },
+  "freebies": {
+    "freeDomain": true,
+    "freeEmail": true
+  },
+  "credits": {
+    "ai": 30
+  },
+  "sites": [
+    {
+      "id": "site-1",
+      "name": "Tom Reed Photography",
+      "domain": "bright-otter-210477.quaysite.app",
+      "temp": true,
+      "status": "draft",
+      "platform": "Site builder (AI)",
+      "visits30d": 0,
+      "visitsTrend": 0,
+      "speedMobile": 94,
+      "cdn": false,
+      "backups": "weekly",
+      "ssl": true,
+      "storageGb": 0.4,
+      "diagnostics": [
+        "Site is still a draft — visitors can't see it",
+        "No domain connected yet"
+      ],
+      "suggestedDomain": "tomreedphoto.com"
+    }
+  ],
+  "domains": [],
+  "mailboxes": [],
+  "servers": [],
+  "marketing": {
+    "active": false
+  }
+}

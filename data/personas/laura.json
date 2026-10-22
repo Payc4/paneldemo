@@ -1,0 +1,79 @@
+{
+  "id": "laura",
+  "label": "Laura — growing online store",
+  "customer": {
+    "firstName": "Laura",
+    "customerSinceMonths": 19,
+    "card": "Visa •• 4242"
+  },
+  "plan": {
+    "sku": "plan-premium",
+    "termMonths": 12,
+    "monthlyPrice": 3.99,
+    "renewsInDays": 23,
+    "autoRenew": false
+  },
+  "freebies": {
+    "freeDomain": true,
+    "freeEmail": true
+  },
+  "credits": {
+    "ai": 12
+  },
+  "sites": [
+    {
+      "id": "site-1",
+      "name": "Lunaclay Studio",
+      "domain": "lunaclay-studio.com",
+      "temp": false,
+      "status": "online",
+      "platform": "WordPress + WooCommerce",
+      "visits30d": 21400,
+      "visitsTrend": 34,
+      "orders30d": 212,
+      "speedMobile": 58,
+      "cdn": false,
+      "backups": "weekly",
+      "ssl": true,
+      "storageGb": 16.9,
+      "diagnostics": [
+        "Homepage loads in 4.1 s on mobile",
+        "CDN is off",
+        "4 product images over 2 MB each",
+        "Object cache is off"
+      ]
+    },
+    {
+      "id": "site-2",
+      "name": "Workshop bookings",
+      "domain": "gray-dove-894335.quaysite.app",
+      "temp": true,
+      "status": "online",
+      "platform": "Site builder",
+      "visits30d": 38,
+      "visitsTrend": 0,
+      "speedMobile": 91,
+      "cdn": false,
+      "backups": "weekly",
+      "ssl": true,
+      "storageGb": 0.7,
+      "diagnostics": [
+        "Live on a temporary address, so it can't be found on Google"
+      ],
+      "suggestedDomain": "lunaclay-workshops.com"
+    }
+  ],
+  "domains": [
+    {
+      "id": "dom-1",
+      "name": "lunaclay-studio.com",
+      "renewsInDays": 143,
+      "autoRenew": true
+    }
+  ],
+  "mailboxes": [],
+  "servers": [],
+  "marketing": {
+    "active": false
+  }
+}
