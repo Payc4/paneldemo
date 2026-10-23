@@ -7,19 +7,28 @@ const eur = n => '€' + Number(n).toFixed(2)
 const num = n => Number(n).toLocaleString('en-GB')
 const attrJson = o => esc(JSON.stringify(o))
 
-const PROMO_ART = `<svg viewBox="0 0 300 176" preserveAspectRatio="xMaxYMid slice">
-  <circle cx="250" cy="20" r="86" fill="#FFC62E"/>
-  <circle cx="250" cy="20" r="86" fill="none" stroke="#1C1606" stroke-opacity=".12" stroke-width="18"/>
-  <g transform="translate(96 70) rotate(-12 60 30)">
-    <path d="M0 30L22 8h96a10 10 0 0 1 10 10v26a10 10 0 0 1-10 10H22z" fill="#fff"/>
-    <circle cx="20" cy="31" r="5" fill="#1C1606"/>
-    <text x="38" y="41" font-family="Geist, system-ui, sans-serif" font-size="24" font-weight="800" fill="#1C1606">SALE</text>
+const PROMO_ART = `<svg viewBox="0 0 230 150" fill="none">
+  <defs>
+    <linearGradient id="paPanel" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#EDE7FF"/><stop offset="1" stop-color="#CDBEFF"/></linearGradient>
+    <linearGradient id="paBadge" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#9B7BFF"/><stop offset="1" stop-color="#5A2FE0"/></linearGradient>
+  </defs>
+  <g transform="rotate(-5 115 75)">
+    <rect x="34" y="18" width="150" height="100" rx="10" fill="#fff" fill-opacity=".92"/>
+    <rect x="40" y="24" width="138" height="88" rx="7" fill="url(#paPanel)"/>
+    <circle cx="70" cy="56" r="15" fill="#fff" fill-opacity=".85"/>
+    <circle cx="70" cy="52" r="5.5" fill="#8C6CF7"/><path d="M60.5 65a9.5 9.5 0 0 1 19 0" fill="#8C6CF7"/>
+    <rect x="94" y="42" width="66" height="6" rx="3" fill="#fff"/><rect x="94" y="54" width="48" height="6" rx="3" fill="#fff" fill-opacity=".75"/>
+    <rect x="52" y="82" width="10" height="20" rx="2" fill="#8C6CF7" fill-opacity=".55"/><rect x="66" y="76" width="10" height="26" rx="2" fill="#8C6CF7" fill-opacity=".75"/><rect x="80" y="70" width="10" height="32" rx="2" fill="#673DE6"/>
+    <path d="M102 98l14-10 12 6 20-16" stroke="#673DE6" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
   </g>
-  <g transform="translate(268 126)"><circle r="22" fill="#E8A400" stroke="#1C1606" stroke-width="3"/><circle r="15" fill="none" stroke="#1C1606" stroke-opacity=".35" stroke-width="2"/><text y="8" text-anchor="middle" font-family="Geist, system-ui, sans-serif" font-size="22" font-weight="800" fill="#1C1606">€</text></g>
-  <g transform="translate(214 154)"><circle r="13" fill="#FFD45C" stroke="#1C1606" stroke-width="2.5"/><text y="5" text-anchor="middle" font-family="Geist, system-ui, sans-serif" font-size="13" font-weight="800" fill="#1C1606">%</text></g>
-  <path d="M104 40l3 8 8 3-8 3-3 8-3-8-8-3 8-3z" fill="#FFC62E"/>
-  <path d="M196 150l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="#fff"/>
-  <circle cx="150" cy="150" r="3" fill="#FFC62E"/><circle cx="90" cy="120" r="2.5" fill="#fff" fill-opacity=".6"/>
+  <rect x="166" y="2" width="34" height="34" rx="10" fill="url(#paBadge)"/>
+  <path d="M183 9v5M183 24v5M173 19h5M188 19h5M176 12l3 3M187 23l3 3M176 26l3-3M187 15l3-3" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>
+  <circle cx="30" cy="30" r="12" fill="#E5383B"/>
+  <text x="30" y="34.5" text-anchor="middle" font-family="Geist, system-ui, sans-serif" font-size="13" font-weight="700" fill="#fff">%</text>
+  <rect x="70" y="112" width="122" height="22" rx="7" fill="#fff" stroke="#DCD3FF"/>
+  <circle cx="82" cy="123" r="5" fill="#EFEAFF"/><path d="M80 123l1.5 1.5L84.5 121" stroke="#673DE6" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="92" y="120" width="88" height="5" rx="2.5" fill="#D9D6E3"/>
+  <path d="M96 128l0 15 4-4 3 6 3-1.5-3-6 5.5-.5z" fill="#1D1E20" stroke="#fff" stroke-width="1.3" stroke-linejoin="round"/>
 </svg>`
 
 const app = { session: null, data: null, agent: null, activity: [], busy: false, showAllTodos: false, promoIndex: 0, promoHidden: false }
@@ -106,7 +115,8 @@ function apply(d) {
 function render() {
   const s = app.data
   $('#greeting').textContent = `Hi, ${s.customer.firstName}! How can I help you today?`
-  $('#avatar').textContent = s.customer.firstName[0]
+  $('#avatar').setAttribute('aria-label', `Account: ${s.customer.firstName}`)
+  $('#avatar').title = s.customer.firstName
   const urgent = s.nba.filter(n => n.tone === 'urgent').length
   $('#bellCount').hidden = !urgent
   $('#bellCount').textContent = urgent
@@ -191,11 +201,12 @@ function renderTodos() {
         ${n.secondary ? `<button class="link small" data-propose="${attrJson(n.secondary.action)}" data-placement="todo:${esc(n.id.split('-')[0])}-alt">${esc(n.secondary.label)}</button>` : ''}
       </div>
       <div class="todo__side">
+        ${n.priceText && !n.price ? `<span class="todo__price">${esc(n.priceText)}</span>` : ''}
         <button class="btn btn-ghost btn-sm" data-propose="${attrJson(n.action)}" data-placement="todo:${esc(n.id.split('-')[0])}">${esc(n.price ? n.cta : (n.cta.startsWith('Claim') ? 'Claim' : n.cta))}</button>
-        <span class="todo__price">${esc(n.priceText)}</span>
+        <button class="kebab" data-ask="${esc(`Tell me more about this: ${n.title}`)}" data-track="todo:more" aria-label="More about ${esc(n.title)}"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></button>
       </div>
     </div>`
-  }).join('') + (list.length > 3 ? `<button class="link small more" id="todoMore">${app.showAllTodos ? 'Show less' : `Show more (${list.length - 3})`}</button>` : '')
+  }).join('') + (list.length > 3 ? `<button class="link small more" id="todoMore">${app.showAllTodos ? 'Show less' : `Show more (${list.length - 3})`}<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${app.showAllTodos ? 'm6 15 6-6 6 6' : 'm6 9 6 6 6-6'}"/></svg></button>` : '')
     : '<div class="todo"><div class="todo__text"><div class="todo__title">You\'re all set</div><div class="todo__desc">Nothing needs your attention right now.</div></div></div>'
 }
 
@@ -212,7 +223,7 @@ function renderSites() {
       <div class="site__head">
         <span class="site__logo ${wp ? 'wp' : ''}" aria-hidden="true">${wp ? 'W' : esc(site.name[0])}</span>
         <div style="min-width:0;flex:1 1 220px">
-          <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px"><span class="site__name">${esc(site.domain)}</span>${status}</div>
+          <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px"><span class="site__name">${esc(site.domain)}</span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color:var(--ink-2)"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>${status}</div>
           <div class="site__meta">${esc(site.name)} · ${esc(site.platform)}</div>
         </div>
         <div class="site__actions">
@@ -228,7 +239,7 @@ function renderSites() {
         <span>CDN <b>${site.cdn ? 'on' : 'off'}</b></span>
       </div>
       ${nbaPublish ? `<div class="site__strip warn"><span>This website is still a draft. Visitors can't see it yet.</span><button class="btn btn-primary btn-sm" data-propose="${attrJson(nbaPublish.action)}" data-placement="site:publish">Publish</button></div>` : ''}
-      ${nbaDomain ? `<div class="site__strip"><span>You're using a temporary domain. Connect your own domain so people can find your site online.</span><button class="btn btn-ghost btn-sm" data-propose="${attrJson(nbaDomain.action)}" data-placement="site:connect">Connect domain</button></div>` : ''}
+      ${nbaDomain ? `<div class="site__strip"><span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>You're using a temporary domain. Connect your own domain so people can find your site online.</span><button class="btn btn-ghost btn-sm" data-propose="${attrJson(nbaDomain.action)}" data-placement="site:connect">Connect domain</button></div>` : ''}
       ${!nbaDomain && !nbaPublish && site.diagnostics?.length ? `<div class="site__strip"><span>${site.diagnostics.length} thing${site.diagnostics.length === 1 ? '' : 's'} to improve: ${esc(site.diagnostics.slice(0, 2).join(' · '))}</span><button class="link small" data-ask="${esc(`What should I fix on ${site.name}?`)}" data-track="site:fix">How do I fix this?</button></div>` : ''}
     </article>`
   }).join('')
@@ -387,6 +398,7 @@ async function ask(text) {
     }
     status.hidden = true
     if (!raw.trim()) md.innerHTML = '<p class="muted">(No reply.)</p>'
+    else showRating()
   } catch (e) {
     status.hidden = true
     bot.classList.add('is-error')
@@ -422,6 +434,14 @@ function autosize() {
   const el = $('#askInput')
   el.style.height = 'auto'
   el.style.height = Math.min(el.scrollHeight, 160) + 'px'
+}
+
+// ───────────────────────── rating card ─────────────────────────
+
+let rated = false
+function showRating() {
+  if (rated || !$('#rate').hidden) return
+  setTimeout(() => { if (!rated) { $('#rate').hidden = false; track('view', 'feedback') } }, 1500)
 }
 
 // ───────────────────────── ui wiring ─────────────────────────
@@ -468,6 +488,18 @@ function bindUi() {
   $('#askInput').addEventListener('keydown', e => {
     if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); ask($('#askInput').value) }
   })
+  document.querySelectorAll('.nav-group').forEach(g => g.addEventListener('click', () => {
+    g.setAttribute('aria-expanded', g.getAttribute('aria-expanded') === 'false' ? 'true' : 'false')
+  }))
+  $('#rateStars').addEventListener('click', e => {
+    const b = e.target.closest('[data-rate]')
+    if (!b) return
+    rated = true
+    track('click', 'feedback:' + b.dataset.rate)
+    $('#rate').hidden = true
+    toast('Thanks for the feedback!')
+  })
+  $('#rateClose').addEventListener('click', () => { rated = true; $('#rate').hidden = true; track('click', 'feedback:close') })
   $('#clearChat').addEventListener('click', () => { $('#chat').innerHTML = ''; $('#chatbox').hidden = true })
   $('#agentBtn').addEventListener('click', focusAgent)
   $('#bellBtn').addEventListener('click', () => $('#todos').scrollIntoView({ behavior: 'smooth', block: 'center' }))
