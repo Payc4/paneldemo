@@ -3,6 +3,7 @@
   "label": "Tom — new customer, day 2",
   "customer": {
     "firstName": "Tom",
+    "lastName": "Reed",
     "customerSinceMonths": 0,
     "card": "Mastercard •• 8810",
     "email": "tom.reed@example.com"

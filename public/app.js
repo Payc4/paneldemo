@@ -120,9 +120,8 @@ function render() {
   $('#greeting').textContent = `Hi, ${s.customer.firstName}! How can I help you today?`
   $('#avatar').setAttribute('aria-label', `Account: ${s.customer.firstName}`)
   $('#avatar').title = s.customer.firstName
-  const urgent = s.nba.filter(n => n.tone === 'urgent').length
-  $('#bellCount').hidden = !urgent
-  $('#bellCount').textContent = urgent
+  renderNotif()
+  renderAccount()
   $('#personaSel').innerHTML = s.personas.map(p => `<option value="${esc(p.id)}" ${p.id === s.persona ? 'selected' : ''}>${esc(p.label)}</option>`).join('')
   $('#agentInfo').textContent = app.agent?.live ? `Knows your account, prices and limits · ${app.agent.model}` : 'Knows your account, prices and limits · demo mode'
   renderChips()
@@ -301,6 +300,7 @@ function tickCountdown() {
 const PAGE_TITLES = {
   home: 'Home', websites: 'Websites', 'domains/search': 'Domain search', 'domains/transfer': 'Transfer domain',
   'domains/dns': 'DNS / Nameservers', 'domains/contacts': 'Contact profiles',
+  emails: 'Emails', services: 'More services', 'marketing/email': 'Email marketing', 'marketing/ads': 'Google Ads', vps: 'VPS',
 }
 const WEB_FILTERS = {
   wordpress: { label: 'WordPress', test: p => /wordpress/i.test(p) },
@@ -308,7 +308,7 @@ const WEB_FILTERS = {
   apps: { label: 'Web Apps', test: p => /node|app|react|next|python/i.test(p) },
   php: { label: 'PHP/HTML', test: p => /php|html|static/i.test(p) },
 }
-const ROUTES = new Set(['home', 'websites', ...Object.keys(WEB_FILTERS).map(k => 'websites/' + k), 'domains/search', 'domains/transfer', 'domains/dns', 'domains/contacts'])
+const ROUTES = new Set(['home', 'websites', ...Object.keys(WEB_FILTERS).map(k => 'websites/' + k), 'domains/search', 'domains/transfer', 'domains/dns', 'domains/contacts', 'emails', 'services', 'marketing/email', 'marketing/ads', 'vps'])
 
 app.page = 'home'
 app.web = { q: '', layout: 'grid', collapsed: false, starred: new Set() }
@@ -363,7 +363,7 @@ function go(route, { push = true } = {}) {
 function syncNav() {
   const r = app.page
   const agent = view === 'agent'
-  $('#navHome').classList.toggle('is-active', r === 'home' && !agent)
+  document.querySelectorAll('.side .nav[data-route]:not(.nav-tree__btn):not([data-no-active])').forEach(b => b.classList.toggle('is-active', !agent && b.dataset.route === r))
   $('#navAgent').classList.toggle('is-active', agent)
   document.querySelectorAll('.nav-tree__btn[data-section]').forEach(b => {
     const inSection = r.startsWith(b.dataset.section)
@@ -391,11 +391,17 @@ function renderPage() {
   if (home || !app.data) return
   const [section, sub] = r.split('/')
   $('#page').innerHTML = section === 'websites' ? pageWebsites(sub)
+    : section === 'emails' ? pageEmails()
+    : section === 'services' ? pageServices()
+    : r === 'marketing/email' ? pageEmailMarketing()
+    : r === 'marketing/ads' ? pageAds()
+    : section === 'vps' ? pageVps()
     : sub === 'search' ? pageDomainSearch()
     : sub === 'transfer' ? pageTransfer()
     : sub === 'dns' ? pageDns()
     : pageContacts()
   if (section === 'websites') renderWebGrid()
+  if (section === 'services') renderServices()
 }
 
 const crumbs = (...parts) => `<nav class="crumbs" aria-label="Breadcrumb">
@@ -670,6 +676,335 @@ function bindPages() {
     if (a === 'collapse') { app.web.collapsed = !app.web.collapsed; return renderPage() }
   })
   try { app.web.starred = new Set(JSON.parse(localStorage.getItem('qp-starred') || '[]')) } catch {}
+}
+
+// ── shared bits for the product pages ──
+
+const ICON2 = {
+  db: '<ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12c0 1.7 3.1 3 7 3s7-1.3 7-3"/>',
+  fwd: '<path d="M14 5l7 6-7 6v-4c-6 0-9 2-11 5 1-6 4-9.5 11-10z"/>',
+  at: '<circle cx="12" cy="12" r="4"/><path d="M16 12v1.5a2.5 2.5 0 0 0 5 0V12a9 9 0 1 0-3.5 7.1"/>',
+  expand: '<path d="M14 4h6v6M20 4l-7 7M10 20H4v-6M4 20l7-7"/>',
+  x: '<path d="M6 6l12 12M18 6 6 18"/>',
+  check: '<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>',
+  tick: '<path d="m5 12 5 5 9-10"/>',
+  shield: '<path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/><path d="m9 12 2 2 4-4"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  trend: '<path d="m3 17 6-6 4 4 8-8M15 7h6v6"/>',
+  ext: '<path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
+  pct: '<circle cx="12" cy="12" r="9"/><path d="M9 15l6-6M9.5 9.5h.01M14.5 14.5h.01"/>',
+  nodes: '<circle cx="5" cy="12" r="2.5"/><circle cx="12" cy="12" r="2.5"/><circle cx="19" cy="6" r="2.5"/><circle cx="19" cy="18" r="2.5"/><path d="M7.5 12h2M14.5 12l2.5-4.5M14.5 12l2.5 4.5"/>',
+  globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
+  mail: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>',
+  server: '<rect x="3" y="4" width="18" height="7" rx="1.5"/><rect x="3" y="13" width="18" height="7" rx="1.5"/><path d="M7 7.5h.01M7 16.5h.01"/>',
+  bot: '<rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 4v4M9 14h.01M15 14h.01"/>',
+  bag: '<path d="M5 8h14l-1 12H6z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/>',
+  lockS: '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+  target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
+}
+const QMARK = (size = 26) => `<svg width="${size}" height="${size}" viewBox="0 0 28 28" aria-hidden="true"><rect width="28" height="28" rx="8" fill="#673DE6"/><path d="M6 17c2.7-3.6 5.3-3.6 8 0s5.3 3.6 8 0" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><circle cx="20" cy="9" r="2" fill="#fff"/></svg>`
+
+// ── Emails ──
+
+const MAIL_PLANS = [
+  {
+    free: true, title: 'Claim your free email',
+    limits: [['db', '1 GB', 'storage per mailbox'], ['fwd', '1', 'Forwarding Rule'], ['at', '1', 'email alias'], ['x', '', 'Expandable mailbox storage']],
+    ai: [[1, 'Agentic Email', true], [0, 'AI mailbox assistant'], [0, 'AI powered email search'], [0, 'Smart AI replies and message drafts'], [0, 'Instant AI email summaries']],
+    benefits: [[0, 'Read Receipts'], [0, 'No Quayside signature in Webmail'], [0, 'Encrypted storage'], [0, 'Advanced spam, malware, and phishing protection']],
+    cta: '<button class="btn-soft">Start free</button>',
+  },
+  {
+    title: 'Starter Business Email', save: 'Save 87%', was: '€2,99', price: '€0,39', note: 'Price per mailbox for a 48-month subscription',
+    limits: [['db', '5 GB', 'storage per mailbox'], ['fwd', '5', 'forwarding rules'], ['at', '5', 'email aliases'], ['expand', '', 'Expandable mailbox storage']],
+    ai: [[1, 'Agentic Email', true], [0, 'AI mailbox assistant'], [0, 'AI powered email search'], [0, 'Smart AI replies and message drafts'], [0, 'Instant AI email summaries']],
+    benefits: [[0, 'Read Receipts'], [1, 'No Quayside signature in Webmail'], [1, 'Encrypted storage'], [1, 'Advanced spam, malware, and phishing protection']],
+    cta: '<button class="btn btn-primary btn-sm">See all plans</button>',
+  },
+]
+
+function pageEmails() {
+  const yes = I(ICON2.check, 18, 1.8), no = I(ICON2.x, 18, 2)
+  const plan = p => `<div class="mail-plan ${p.free ? '' : 'mail-plan--paid'}">
+    ${p.free ? `<span class="mail-plan__logo">${QMARK(26)}</span><h2>${esc(p.title)}</h2>`
+      : `<h2>${esc(p.title)}</h2><div class="mail-plan__save"><span class="save-pill">${p.save}</span><s>${p.was}</s></div>
+         <div class="mail-plan__price"><b>${p.price}</b>/mo</div><p class="mail-plan__note">${p.note}</p>`}
+    <ul class="feat">${p.limits.map(([ic, n, t]) => `<li class="${ic === 'x' ? 'is-no' : ''}">${I(ICON2[ic], 18, 1.7)}<span class="u">${n ? `<b>${n}</b> ` : ''}${t}</span></li>`).join('')}</ul>
+    <h3>AI tools</h3>
+    <ul class="feat">${p.ai.map(([ok, t, beta]) => `<li class="${ok ? 'is-yes' : 'is-no'}">${ok ? yes : no}<span>${t}</span>${beta ? '<span class="beta-pill">Beta</span>' : ''}</li>`).join('')}</ul>
+    <h3>Benefits:</h3>
+    <ul class="feat">${p.benefits.map(([ok, t]) => `<li class="${ok ? 'is-yes' : 'is-no'}">${ok ? yes : no}<span class="u">${t}</span></li>`).join('')}</ul>
+    <div class="mail-plan__cta">${p.cta}</div>
+  </div>`
+  return `<div class="pg pg--mid">
+    <h1 class="pg-title">Emails</h1>
+    <section class="pg-card mail-plans">${MAIL_PLANS.map(plan).join('')}</section>
+  </div>`
+}
+
+// ── More services ──
+
+const SERVICE_CATS = ['All', 'Hosting & VPS', 'Websites', 'Domains', 'Email & marketing', 'AI & automation', 'Other']
+const SERVICES = [
+  { cat: 'Websites', title: 'Quayside Ecommerce', text: 'Manage products and sell effortlessly across multiple sales channels all with zero transaction fees and built-in AI tools.', art: 'store', route: 'websites' },
+  { cat: 'Email & marketing', title: 'Business Email', badge: 'Save up to 87%', text: 'Build your brand with a professional email address, like you@yourdomain.com.', art: 'mail', route: 'emails' },
+  { cat: 'Email & marketing', title: 'Quayside Reach', ai: true, badge: 'Save up to 67%', text: 'Create inbox-ready newsletters with an AI-powered email marketing tool.', art: 'reach', route: 'marketing/email' },
+  { cat: 'Hosting & VPS', title: 'VPS hosting', badge: 'Save up to 70%', text: 'Full power, flexibility and speed with your own virtual private server.', art: 'vps', route: 'vps' },
+  { cat: 'Domains', title: 'Domain names', badge: 'Up to 99% off', text: 'Find the perfect name for your brand, with free WHOIS privacy.', art: 'domain', route: 'domains/search' },
+  { cat: 'AI & automation', title: 'Self-hosted n8n', badge: 'Save up to 70%', text: 'No-code AI workflows with unlimited runs on your own server.', art: 'n8n', route: 'vps' },
+  { cat: 'Email & marketing', title: 'Google Ads', text: 'Show up on Search, YouTube and Gmail and bring more people to your business.', art: 'ads', route: 'marketing/ads' },
+  { cat: 'AI & automation', title: 'AI agents', ai: true, text: 'A team of AI agents for sales, marketing and SEO that works around the clock.', art: 'agents', view: 'agent' },
+  { cat: 'Other', title: 'SSL certificates', text: 'Keep visitors safe and show the padlock in every browser.', art: 'ssl' },
+]
+
+function serviceArt(kind) {
+  const wrap = (bg, inner) => `<div class="svc-art" style="background:${bg}">${inner}</div>`
+  if (kind === 'store') return wrap('linear-gradient(135deg,#2A3346,#5B6C86)', `
+    <div class="svc-store"><div class="svc-store__card"><div class="svc-store__img"></div><b>Navy cap</b><span>€59</span><i>${I(ICON2.bag, 14, 2)}</i></div>
+    <svg class="svc-store__cap" viewBox="0 0 120 80" aria-hidden="true"><path d="M14 52c0-26 20-40 44-40s38 16 38 40z" fill="#1E2A4A"/><path d="M58 12v40M30 22c8 6 10 18 10 30M86 22c-8 6-10 18-10 30" stroke="#33426B" stroke-width="2" fill="none"/><path d="M8 54c30-6 70-6 104 4-6 8-20 10-34 8-22-3-48-4-70-12z" fill="#16203A"/><circle cx="58" cy="12" r="3" fill="#33426B"/></svg>
+    <div class="svc-store__chart"><b>€15,347</b><span>+11%</span><svg viewBox="0 0 100 30" preserveAspectRatio="none"><path d="M0 26C20 24 30 18 45 20s30-10 55-16" fill="none" stroke="#2BB673" stroke-width="2"/></svg></div></div>`)
+  if (kind === 'mail') return wrap('linear-gradient(135deg,#6F4BF0,#9C82FF)', `
+    <div class="svc-mail"><div class="svc-mail__bar">${QMARK(14)}<b>QUAYSIDE</b><span>| Mail</span><strong>Inbox</strong></div>
+    <div class="svc-mail__btn">${I('<path d="M4 20h4L19 9l-4-4L4 16z"/>', 12, 2)} New message</div><div class="svc-mail__pills"><i></i><i></i><i></i></div><div class="svc-mail__row"></div></div>`)
+  if (kind === 'reach') return wrap('linear-gradient(135deg,#B9A8FF,#E3DBFF)', `
+    <div class="svc-reach"><div class="svc-reach__tile"><svg viewBox="0 0 40 40" width="56" height="56" aria-hidden="true">${[0, 45, 90, 135, 180, 225, 270, 315].map(a => `<rect x="18" y="4" width="4" height="10" rx="2" fill="#1D1E20" transform="rotate(${a} 20 20)"/>`).join('')}</svg></div>
+    <svg class="svc-reach__cursor" viewBox="0 0 24 24" width="40" height="40" aria-hidden="true"><path d="M5 3v17l5-5 3 7 3-1.4-3-6.6h7z" fill="#2B2350" stroke="#fff" stroke-width="1.2"/></svg>
+    <span class="spark s1"></span><span class="spark s2"></span><span class="spark s3"></span></div>`)
+  const tile = (ic, bg) => wrap(bg, `<div class="svc-generic"><span class="svc-generic__tile">${I(ic, 34, 1.7)}</span><span class="spark s1"></span><span class="spark s2"></span></div>`)
+  return {
+    vps: tile(ICON2.server, 'linear-gradient(135deg,#1B1240,#3A1F8C)'),
+    domain: tile(ICON2.globe, 'linear-gradient(135deg,#8C6CF7,#C9B8FF)'),
+    n8n: tile(ICON2.nodes, 'linear-gradient(135deg,#22134F,#5130B8)'),
+    ads: tile(ICON2.target, 'linear-gradient(135deg,#E8E2FF,#B9A8FF)'),
+    agents: tile(ICON2.bot, 'linear-gradient(135deg,#673DE6,#B66DFF)'),
+    ssl: tile(ICON2.lockS, 'linear-gradient(135deg,#DDF5E6,#B4E8C8)'),
+  }[kind]
+}
+
+app.svc = { cat: 'All', q: '' }
+
+function pageServices() {
+  return `<div class="pg pg--mid">
+    <h1 class="pg-title">More services</h1>
+    <section class="pg-card svc-filter">
+      <div class="chips-row" role="tablist" aria-label="Category">${SERVICE_CATS.map(c => `<button role="tab" class="cat ${app.svc.cat === c ? 'is-on' : ''}" aria-selected="${app.svc.cat === c}" data-cat="${esc(c)}">${esc(c)}</button>`).join('')}</div>
+      <label class="svc-search"><span class="sr-only">Search services</span><input id="svcSearch" type="search" placeholder="Search" value="${esc(app.svc.q)}" autocomplete="off"></label>
+    </section>
+    <div id="svcBody"></div>
+  </div>`
+}
+
+function renderServices() {
+  const el = $('#svcBody')
+  if (!el) return
+  const q = app.svc.q.trim().toLowerCase()
+  const all = app.svc.cat === 'All' && !q
+  const list = SERVICES.filter(x => (app.svc.cat === 'All' || x.cat === app.svc.cat) && (!q || `${x.title} ${x.text}`.toLowerCase().includes(q)))
+  el.innerHTML = `${all ? `
+    <section class="promo svc-banner" aria-label="Featured deal">
+      <div class="promo__body">
+        <div><p class="promo__headline svc-banner__title">Grow your business with a team of AI agents</p>
+        <p class="svc-banner__sub">From strategy and SEO to marketing and sales – pick an agent, describe what you need, and watch it get done in seconds.</p></div>
+        <div class="promo__row"><button class="promo__cta" data-view="agent">Claim deal</button>
+          <div class="promo__price"><div class="promo__was"><s>€9,99</s><span class="save">Save €40,19</span></div><div class="promo__now">€6,64<span>/mo</span></div></div></div>
+      </div>
+      <div class="promo__art" aria-hidden="true">${PROMO_ART}</div>
+    </section>
+    <div class="svc-duo">
+      <article class="svc-deal"><span class="svc-deal__icon">${I(ICON2.nodes, 18, 2)}</span>
+        <p>Hours of work done in seconds? Automate any business task with your own AI agent, live in 1 click</p>
+        <div class="svc-deal__row"><div><div class="promo__was"><s>€18,99</s><span class="save">Save €148,19</span></div><div class="svc-deal__now">€6,64 <span>/mo</span></div></div>
+        <button class="btn-dark" data-route="vps">Claim deal</button></div></article>
+      <article class="svc-deal"><span class="svc-deal__icon">${I(ICON2.globe, 18, 2)}</span>
+        <p>Register a .com domain for 3 years – and get your first year for just €0,01</p>
+        <div class="svc-deal__row"><div><div class="promo__was"><s>€16,99</s><span class="save">99% off</span></div><div class="svc-deal__now">€0,01 <span>/1st yr</span></div></div>
+        <button class="btn-dark" data-route="domains/search">Search domains</button></div></article>
+    </div>` : ''}
+    ${list.length ? `<div class="svc-grid">${list.map(x => `<article class="svc-card">
+      <div class="svc-card__img">${serviceArt(x.art)}${x.badge ? `<span class="svc-card__badge">${esc(x.badge)}</span>` : ''}</div>
+      <div class="svc-card__body"><h2>${esc(x.title)}${x.ai ? `<span class="ai-pill">${I(ICON.sparkle, 11, 2)} AI</span>` : ''}</h2><p>${esc(x.text)}</p></div>
+      <button class="btn-outline" ${x.route ? `data-route="${x.route}"` : x.view ? `data-view="${x.view}"` : ''}>Explore offer</button>
+    </article>`).join('')}</div>` : '<p class="web-empty">No services match your search.</p>'}`
+}
+
+// ── Email marketing ──
+
+function pageEmailMarketing() {
+  return `<div class="pg pg--mid">
+    <section class="em-hero">
+      <div class="em-hero__text">
+        <h1>Launch AI email marketing campaigns in minutes</h1>
+        <p>Email marketing tool for building, customizing, sending, and tracking professional email campaigns.</p>
+        <button class="btn btn-primary">Explore plans</button>
+        <span class="em-hero__guarantee">${I(ICON2.shield, 17, 1.7)}30-day money-back guarantee</span>
+      </div>
+      <div class="em-hero__art" aria-hidden="true">
+        <div class="em-app"><div class="em-app__brand">${QMARK(12)}<b>QUAYSIDE</b> | Reach</div><div class="em-app__side"><i></i><i></i><i></i><i></i><i></i><i></i></div><b class="em-app__title">Campaigns</b><div class="em-app__ghost"></div></div>
+        <div class="em-mail"><span class="em-mail__from">dr.summer</span><div class="em-mail__hero"><b>Welcome to the family.</b>
+          <svg viewBox="0 0 160 120" aria-hidden="true"><circle cx="58" cy="52" r="22" fill="#F2C8A8"/><path d="M34 50c0-22 44-28 48 0-8-8-30-10-48 0z" fill="#3A2416"/><path d="M20 120c4-34 20-46 38-46s34 12 38 46z" fill="#C8372D"/><circle cx="108" cy="48" r="20" fill="#E8B48E"/><path d="M90 42c4-16 32-18 36 0-10-6-24-6-36 0z" fill="#B88A5E"/><path d="M72 120c4-32 18-44 36-44s32 12 36 44z" fill="#2E6B4A"/></svg></div>
+          <span class="em-mail__cta">Here's 10% OFF</span></div>
+        <div class="em-chip em-chip--trigger">${I(ICON2.fwd, 12, 2)}<span><small>Trigger</small>All new subscribers</span></div>
+        <div class="em-chip em-chip--subs"><small>${I('<circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0M17 11a3 3 0 1 0 0-6M21 20a5 5 0 0 0-4-5"/>', 12, 2)} Subscribers</small><b>+462</b><span>+53%</span><svg viewBox="0 0 100 34" preserveAspectRatio="none"><path d="M0 32C25 30 40 22 55 18S80 6 100 2" fill="none" stroke="#B9A8FF" stroke-width="2"/></svg></div>
+        <div class="em-prompt">Create a welcome message with -10% off for our new subscribers<span>${I(ICON.chevR, 12, 2.5)}</span></div>
+      </div>
+    </section>
+    <div class="em-feats">
+      <article class="em-feat"><div class="em-feat__art">
+        <div class="em-flow"><div class="em-flow__trigger">${I(ICON2.fwd, 12, 2)}<span><small>Trigger</small>All new subscribers</span></div><i class="em-flow__plus">+</i>
+        <div class="em-flow__mail"><small>${I(ICON2.mail, 11, 2)} Send email</small><b>Welcome new subscribe…</b><div class="em-flow__img"><span>Welcome</span></div></div></div>
+        ${CURSOR}</div>
+        <h2>Automate without work</h2><p>Welcome new subscribers, run drip campaigns, send abandoned cart emails and more.</p></article>
+      <article class="em-feat"><div class="em-feat__art">
+        <div class="em-promo"><b>${I('<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>', 12, 2)} Limited-Time Automation Promo</b><div class="em-promo__img"><span>Mega Savings</span>
+        <svg viewBox="0 0 120 70" aria-hidden="true"><path d="M20 50c0-22 14-34 34-34s30 14 30 34z" fill="#2F4A36"/><path d="M14 52c26-6 58-6 86 4-6 6-16 8-28 6-18-2-40-2-58-10z" fill="#24382A"/><path d="M84 40c10-4 24-2 32 6" stroke="#F2C8A8" stroke-width="8" stroke-linecap="round" fill="none"/></svg>
+        <i>GRAB THE OFFER</i></div></div>${CURSOR}</div>
+        <h2>Weekly campaign ideas</h2><p>AI studies your business to suggest ready-to-go campaign ideas every week.</p></article>
+      <article class="em-feat"><div class="em-feat__art">
+        <div class="em-inbox"><b>Tom from Bloom-ing</b><span>Fresh Deals are inside!</span></div>
+        <div class="em-subjects"><small>AI suggested subject lines</small><span>Refresh your season</span><span class="is-on">Fresh Deals are inside!</span><span>Bright offers, big savings!</span><span>A fresh start</span></div>${CURSOR}</div>
+        <h2>Subject lines written for you</h2><p>Proven subject lines matched to your content. Just pick your favorite.</p></article>
+    </div>
+    <section class="pg-card em-wa">
+      <div class="em-wa__text"><h2>Go beyond email with WhatsApp</h2><p>Connect your WhatsApp Business account and send offers to your customers where they already chat.</p><button class="btn-soft">Connect WhatsApp</button></div>
+      <div class="em-wa__art" aria-hidden="true"><div class="em-phone"><div class="em-phone__img"></div><div class="em-bubble">🌿 New arrivals are in! Get 15% off this week only.</div><div class="em-bubble em-bubble--me">Ordering two!</div></div></div>
+    </section>
+  </div>`
+}
+const CURSOR = `<svg class="em-cursor" viewBox="0 0 24 24" width="30" height="30" aria-hidden="true"><path d="M5 3v17l5-5 3 7 3-1.4-3-6.6h7z" fill="#2B2350" stroke="#fff" stroke-width="1.2"/></svg>`
+
+// ── Google Ads ──
+
+function pageAds() {
+  const step = (n, chipIcon, chip, title, text) => `<article class="ads-step"><div class="ads-step__top"><span class="ads-step__n">${n}</span><span class="ads-step__chip">${I(chipIcon, 13, 1.8)}${chip}</span></div><h3>${title}</h3><p>${text}</p></article>`
+  return `<div class="pg pg--mid">
+    <h1 class="pg-title">Google Ads</h1>
+    <section class="ads-hero">
+      <div class="ads-hero__text"><h2>Grow your business faster with Google Ads</h2>
+        <p>Get more customers with Google Ads from Quayside. Your ads will show on Google Search, YouTube, Gmail, Display, and Discover, bringing more people straight to your business.</p>
+        <button class="btn btn-primary">Get started</button></div>
+      <div class="ads-hero__art" aria-hidden="true">
+        <span class="ads-hero__tile">${I(ICON2.target, 30, 1.8)}<small>Ads</small></span>
+        <div class="ads-hero__card"><b>Google Ads campaign</b><small>By Quayside</small>
+          <ul>${['Show up high in Google', 'Grow site traffic instantly', 'Pay only for real clicks', 'Pause your ads anytime'].map(t => `<li>${I(ICON2.tick, 14, 2.4)}${t}</li>`).join('')}</ul></div>
+        <span class="ads-hero__chip"><i>${I(ICON2.trend, 13, 2.2)}</i>+ 30% clicks</span>
+      </div>
+    </section>
+    <section class="ads-offer"><span class="ads-offer__icon">${I(ICON2.pct, 22, 1.8)}</span><p>Reach your 60-day spend target and get it back in Google Ads credit. Test ideas without burning your budget!</p><button class="ads-offer__link">Learn more</button><button class="ads-offer__btn">Claim offer</button></section>
+    <section class="pg-card ads-how">
+      <div class="ads-how__head"><h2>How it works</h2><button class="btn-outline btn-outline--sm">Learn more ${I(ICON2.ext, 13, 2)}</button></div>
+      <div class="ads-steps">
+        ${step(1, ICON2.clock, 'One-click', 'Connect your Google Ads account', "Connect an existing Google Ads account, or we'll create one for you.")}
+        ${step(2, ICON2.clock, 'Few minutes', 'Tell us about your business', 'Answer a few questions about your budget, audience, and goals.')}
+        ${step(3, ICON2.trend, 'Track here', 'Launch your ad and track results', 'Google reviews and launches your ad within 1 business day. Track results in Quayside.')}
+      </div>
+    </section>
+  </div>`
+}
+
+// ── VPS ──
+
+function vpsArt(kind) {
+  if (kind === 'speed') return `<svg viewBox="0 0 260 150" aria-hidden="true"><path d="M60 0v150M200 0v150M0 40h260M0 110h260" stroke="#fff" stroke-opacity=".06"/>
+    <circle cx="130" cy="72" r="46" fill="none" stroke="#2A1E5C" stroke-width="7"/><path d="M95 104A46 46 0 1 1 168 98" fill="none" stroke="#21C08B" stroke-width="7" stroke-linecap="round"/>
+    <path d="M136 42l-20 36h14l-6 30 22-40h-15z" fill="#8C6CF7"/><rect x="104" y="116" width="52" height="20" rx="6" fill="#1A1238" stroke="#4B3A8C"/>
+    <circle cx="116" cy="126" r="4" fill="none" stroke="#fff" stroke-width="1.4"/><text x="124" y="130" font-family="Geist, system-ui, sans-serif" font-size="9" fill="#fff">1 Gb/s</text></svg>`
+  if (kind === 'game') return `<svg viewBox="0 0 260 150" aria-hidden="true"><path d="M30 40l4 4M226 30v8M222 34h8" stroke="#B9A4FF" stroke-width="2"/>
+    <g transform="rotate(-8 90 80)"><rect x="56" y="52" width="70" height="70" fill="#7A52E8"/><rect x="56" y="52" width="70" height="20" fill="#9B7BFF"/><rect x="70" y="80" width="14" height="14" fill="#4A2BA8"/><rect x="98" y="80" width="14" height="14" fill="#4A2BA8"/><rect x="84" y="100" width="14" height="10" fill="#2E1A6E"/></g>
+    <g transform="rotate(10 180 80)"><rect x="140" y="64" width="84" height="44" rx="22" fill="#E9E4FF"/><rect x="156" y="82" width="18" height="6" rx="2" fill="#2B2350"/><rect x="162" y="76" width="6" height="18" rx="2" fill="#2B2350"/><circle cx="198" cy="80" r="5" fill="#8C6CF7"/><circle cx="208" cy="90" r="5" fill="#21C08B"/></g>
+    <rect x="34" y="28" width="12" height="12" fill="#9B7BFF" transform="rotate(20 40 34)"/><rect x="216" y="118" width="10" height="10" fill="#7A52E8"/></svg>`
+  if (kind === 'apps') return `<svg viewBox="0 0 260 150" aria-hidden="true"><path d="M0 30h260M0 60h260M0 90h260M0 120h260M40 0v150M80 0v150M120 0v150M160 0v150M200 0v150M240 0v150" stroke="#fff" stroke-opacity=".05"/>
+    <rect x="40" y="38" width="190" height="112" rx="8" fill="#14102A" stroke="#3A2D72"/><rect x="66" y="24" width="96" height="22" rx="5" fill="#14102A" stroke="#4B3A8C"/>
+    <rect x="74" y="31" width="9" height="9" rx="2" fill="#8C6CF7"/><text x="88" y="39" font-family="Geist, system-ui, sans-serif" font-size="8" fill="#fff">App manager</text>
+    <text x="52" y="66" font-family="Geist, system-ui, sans-serif" font-size="8" fill="#fff">Projects</text><rect x="178" y="58" width="36" height="10" rx="3" fill="#673DE6"/>
+    <rect x="52" y="76" width="166" height="1" fill="#2A2150"/>${[0, 1, 2].map(i => `<rect x="52" y="${84 + i * 16}" width="${60 - i * 10}" height="5" rx="2.5" fill="#4B3A8C"/><rect x="140" y="${84 + i * 16}" width="28" height="6" rx="3" fill="#1E5C45"/><rect x="190" y="${84 + i * 16}" width="22" height="5" rx="2.5" fill="#3A2D72"/>`).join('')}
+    <rect x="212" y="94" width="22" height="22" rx="5" fill="#1A1238" stroke="#5B4AA8"/><path d="M223 99v12M217 105h12" stroke="#fff" stroke-width="1.6"/></svg>`
+  return `<svg viewBox="0 0 260 150" aria-hidden="true"><path d="M50 22v8M46 26h8M220 90v8M216 94h8" stroke="#B9A4FF" stroke-width="2"/>
+    <rect x="70" y="40" width="140" height="44" rx="6" fill="#1A1238" stroke="#5B4AA8"/><circle cx="92" cy="62" r="4" fill="none" stroke="#fff" stroke-width="2"/><circle cx="104" cy="62" r="4" fill="none" stroke="#fff" stroke-width="2"/><circle cx="118" cy="56" r="4" fill="none" stroke="#fff" stroke-width="2"/><circle cx="118" cy="68" r="4" fill="none" stroke="#fff" stroke-width="2"/><path d="M96 62h4M108 62l6-5M108 62l6 5" stroke="#fff" stroke-width="2"/><rect x="136" y="61" width="58" height="2" fill="#5B4AA8"/>
+    <rect x="80" y="84" width="6" height="20" fill="#2A1E5C"/><rect x="194" y="84" width="6" height="20" fill="#2A1E5C"/>
+    <rect x="70" y="104" width="140" height="44" rx="6" fill="#14102A" stroke="#3A2D72"/><rect x="88" y="122" width="10" height="4" rx="2" fill="#21C08B"/><rect x="104" y="122" width="10" height="4" rx="2" fill="#8C6CF7"/><rect x="136" y="123" width="58" height="2" fill="#3A2D72"/></svg>`
+}
+
+function pageVps() {
+  const card = (art, title, text, primary, more = true) => `<article class="vps-card">
+    <div class="vps-card__img">${vpsArt(art)}<span class="svc-card__badge">Save up to 70%</span></div>
+    <h2>${title}</h2><p>${text}</p>
+    <div class="vps-card__actions">${more ? `<button class="btn btn-primary btn-sm">${primary}</button><button class="vps-more">Learn more ${I(ICON2.ext, 13, 2)}</button>` : `<button class="btn btn-primary btn-sm vps-wide">${primary}</button>`}</div>
+  </article>`
+  return `<div class="pg pg--mid vps-page">
+    <h1 class="pg-title">VPS</h1>
+    <section class="pg-card vps-wrap">
+      ${card('speed', 'VPS hosting', 'Enjoy full power, flexibility, and speed with your own virtual private server.', 'Set up VPS')}
+      ${card('game', 'Game Panel', 'Host your favorite games with powerful processors and full customization.', 'Set up Game Panel')}
+      ${card('apps', 'Application catalog', 'Deploy popular apps like OpenClaw, Paperclip, Hermes agent and more.', 'See catalog', false)}
+      ${card('n8n', 'Self hosting n8n', 'Self-hosted n8n delivers no-code AI workflows with unlimited runs.', 'Set up n8n')}
+    </section>
+  </div>`
+}
+
+// ── notifications & account panels ──
+
+app.readAll = false
+function unreadCount() { return app.readAll ? 0 : (app.data?.nba || []).length }
+
+function renderNotif() {
+  const list = app.data.nba
+  const n = unreadCount()
+  $('#bellCount').hidden = !n
+  $('#bellCount').textContent = n
+  $('#markRead').hidden = !n
+  $('#notifList').innerHTML = list.length ? list.map(x => {
+    const kind = Object.keys(todoIcons).find(k => x.id.startsWith(k)) || 'credits'
+    return `<div class="notif">
+      <span class="todo__icon t-${esc(x.tone)} no-dot" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${todoIcons[kind]}</svg></span>
+      <div class="notif__text">
+        <div class="notif__title">${app.readAll ? '' : '<i class="notif__dot" aria-label="Unread"></i>'}${esc(x.title)}</div>
+        <div class="notif__desc">${esc(x.reason)}</div>
+        <button class="btn btn-ghost btn-sm" data-propose="${attrJson(x.action)}" data-placement="bell:${esc(x.id.split('-')[0])}">${esc(x.price ? x.cta : (x.cta.startsWith('Claim') ? 'Claim' : x.cta))}</button>
+      </div>
+      <button class="kebab" data-ask="${esc(`Tell me more about this: ${x.title}`)}" aria-label="More about ${esc(x.title)}"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></button>
+    </div>`
+  }).join('') : '<p class="notif__empty">You\'re all caught up.</p>'
+}
+
+function renderAccount() {
+  const c = app.data.customer
+  $('#acctName').textContent = [c.firstName, c.lastName].filter(Boolean).join(' ')
+  $('#acctEmail').textContent = c.email || ''
+  $('#acctCredits').textContent = app.data.usage.aiCredits
+}
+
+function togglePop(id, open) {
+  const pop = $(id)
+  const btn = id === '#notifPop' ? $('#bellBtn') : $('#avatar')
+  open ??= pop.hidden
+  document.querySelectorAll('.pop').forEach(p => { p.hidden = true })
+  $('#bellBtn').setAttribute('aria-expanded', 'false'); $('#avatar').setAttribute('aria-expanded', 'false')
+  pop.hidden = !open
+  btn.setAttribute('aria-expanded', String(open))
+}
+function closePops() { document.querySelectorAll('.pop').forEach(p => { p.hidden = true }); $('#bellBtn').setAttribute('aria-expanded', 'false'); $('#avatar').setAttribute('aria-expanded', 'false') }
+
+function bindPops() {
+  $('#bellBtn').addEventListener('click', e => { e.stopPropagation(); togglePop('#notifPop') })
+  $('#avatar').addEventListener('click', e => { e.stopPropagation(); togglePop('#acctPop') })
+  $('#markRead').addEventListener('click', () => { app.readAll = true; document.body.classList.add('read-all'); renderNotif() })
+  document.addEventListener('click', e => {
+    if (e.target.closest('.pop')) {
+      if (e.target.closest('[data-propose],[data-ask]')) closePops()
+      return
+    }
+    closePops()
+  })
+  $('#acctPop').addEventListener('click', e => {
+    const t = e.target.closest('[data-theme]')
+    if (!t) return
+    $('#acctPop').querySelectorAll('[data-theme]').forEach(b => { const on = b === t; b.classList.toggle('is-on', on); b.setAttribute('aria-checked', String(on)) })
+  })
+  $('#page').addEventListener('click', e => {
+    const c = e.target.closest('[data-cat]')
+    if (c) { app.svc.cat = c.dataset.cat; $('#page').querySelectorAll('[data-cat]').forEach(b => { const on = b === c; b.classList.toggle('is-on', on); b.setAttribute('aria-selected', String(on)) }); renderServices() }
+  })
+  $('#page').addEventListener('input', e => { if (e.target.id === 'svcSearch') { app.svc.q = e.target.value; renderServices() } })
 }
 
 // ───────────────────────── offer cards ─────────────────────────
@@ -1067,7 +1402,7 @@ function bindUi() {
     document.querySelectorAll('.nav-tree__btn').forEach(o => o.setAttribute('aria-expanded', 'false'))
     btn.setAttribute('aria-expanded', String(open))
   }))
-  $('#bellBtn').addEventListener('click', () => { go('home'); $('#todos').scrollIntoView({ behavior: 'smooth', block: 'center' }) })
+  bindPops()
   const refer = () => {
     navigator.clipboard?.writeText(`${location.origin}/?ref=${app.session.slice(0, 8)}`).catch(() => {})
     toast('Your referral link was copied — earn up to €200 per friend')
@@ -1091,6 +1426,7 @@ function bindUi() {
     const d = await api('/api/reset', { persona: e.target.value })
     app.showAllTodos = false
     app.promoIndex = 0
+    app.readAll = false; document.body.classList.remove('read-all')
     apply(d)
     resetChats()
     toast(`Now viewing as ${app.data.customer.firstName}`)
@@ -1098,6 +1434,7 @@ function bindUi() {
   $('#resetBtn').addEventListener('click', async () => {
     const d = await api('/api/reset', { persona: app.data.persona })
     app.promoHidden = false
+    app.readAll = false; document.body.classList.remove('read-all')
     apply(d)
     resetChats()
     toast('Demo account reset')
@@ -1108,7 +1445,8 @@ function bindUi() {
   $('#modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal() })
   document.addEventListener('keydown', e => {
     if (e.key !== 'Escape') return
-    if (!$('#modal').hidden) closeModal()
+    if (document.querySelector('.pop:not([hidden])')) closePops()
+    else if (!$('#modal').hidden) closeModal()
     else if ($('#agentApp').classList.contains('side-open')) closeAgentSide()
     else if (view === 'agent') setView('home')
   })

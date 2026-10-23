@@ -3,6 +3,7 @@
   "label": "Laura — growing online store",
   "customer": {
     "firstName": "Laura",
+    "lastName": "Bennett",
     "customerSinceMonths": 19,
     "card": "Visa •• 4242",
     "email": "laura@lunaclay-studio.com"
