@@ -171,18 +171,6 @@
           <p class="hero__meta" id="agentInfo"></p>
         </section>
 
-        <section class="chatbox" id="chatbox" aria-label="Conversation with the agent">
-          <div class="chatbox__head">
-            <div class="chatbox__title"><span class="agent-mark" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 2.5v5M12 16.5v5M2.5 12h5M16.5 12h5M5.3 5.3l3.5 3.5M15.2 15.2l3.5 3.5M5.3 18.7l3.5-3.5M15.2 8.8l3.5-3.5"/></svg></span><strong>Agent</strong></div>
-            <button class="btn btn-ghost btn-sm" id="clearChat"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>New chat</button>
-          </div>
-          <div class="agent-welcome" id="agentWelcome">
-            <span class="agent-mark agent-mark--lg" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 2.5v5M12 16.5v5M2.5 12h5M16.5 12h5M5.3 5.3l3.5 3.5M15.2 15.2l3.5 3.5M5.3 18.7l3.5-3.5M15.2 8.8l3.5-3.5"/></svg></span>
-            <h2 id="agentWelcomeTitle">Hi! I'm your Quayside Agent</h2>
-            <p>I know your websites, plan, renewals and prices. Ask me anything, or pick one of the suggestions below.</p>
-          </div>
-          <div class="chat" id="chat"></div>
-        </section>
 
         <!-- Promo carousel -->
         <section class="promo-wrap home-only" id="promoWrap" aria-roledescription="carousel" aria-label="Deals">
@@ -224,6 +212,68 @@
         <p class="footnote home-only">Concept demo of a redesigned hosting control panel. Made-up account and prices; nothing is sold or charged.</p>
       </div>
     </main>
+  </div>
+
+  <div class="ag" id="agentApp" hidden role="dialog" aria-modal="true" aria-label="Quayside Agent">
+    <aside class="ag-side" id="agSide" aria-label="Agent menu">
+      <button class="ag-new" id="agNew" data-track="agent:new-chat">New chat</button>
+      <nav class="ag-nav">
+        <button class="ag-link" data-ask="Get my store ready for Black Friday" data-track="agent:project"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-9 9z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg><span>Black Friday prep</span></button>
+        <button class="ag-link" data-demo><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span>Files</span></button>
+        <button class="ag-link" data-demo><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg><span>Skills</span></button>
+        <button class="ag-link" data-demo><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9a2 2 0 0 1 2-2h4l2 2h6a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M7 7V6a2 2 0 0 1 2-2h3l2 2h5a2 2 0 0 1 2 2v7"/></svg><span>Projects</span></button>
+        <button class="ag-link" data-demo><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg><span>Apps</span></button>
+        <button class="ag-link" data-demo><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg><span>Channels</span><span class="ag-link__extra" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l1.4-4A8 8 0 1 1 8 18.6z"/></svg><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18.5h2"/></svg><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span></button>
+      </nav>
+      <p class="ag-head">Jobs</p>
+      <button class="ag-head ag-head--btn" id="agChatsToggle" aria-expanded="true" aria-controls="agChats">Chats<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg></button>
+      <div class="ag-chats" id="agChats"></div>
+    </aside>
+    <button class="ag-scrim" id="agScrim" aria-label="Close agent menu" hidden></button>
+
+    <section class="ag-main">
+      <div class="ag-tools">
+        <button class="ag-tool" id="agFeedback" aria-label="Give feedback" title="Give feedback"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1zM15 9a4 4 0 0 1 0 6M18 6a8 8 0 0 1 0 12"/></svg></button>
+        <button class="ag-tool" id="agSideToggle" aria-label="Show or hide the agent menu" title="Toggle menu"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 4v16M6 8h3M6 11h3M6 14h3"/></svg></button>
+        <button class="ag-tool" id="agClose" aria-label="Close agent" title="Close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      </div>
+
+      <div class="ag-scroll" id="agScroll">
+        <div class="ag-col ag-col--fill">
+          <div class="ag-banner" id="agBanner">
+            <span class="ag-banner__i" aria-hidden="true">i</span>
+            <span>Bring your next big idea to life. Get more with an AI credits pack. <button class="ag-banner__link" data-propose="{&quot;sku&quot;:&quot;ai-credits-500&quot;}" data-placement="agent:banner">Upgrade</button></span>
+            <button class="ag-banner__x" id="agBannerX" aria-label="Hide"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+          </div>
+          <div class="ag-hero" id="agHero">
+            <div class="ag-logo" aria-label="Quayside">
+              <svg width="54" height="54" viewBox="0 0 28 28" aria-hidden="true"><rect width="28" height="28" rx="8" fill="#673DE6"/><path d="M6 17c2.7-3.6 5.3-3.6 8 0s5.3 3.6 8 0" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><circle cx="20" cy="9" r="2" fill="#fff"/></svg>
+              <span>quayside</span>
+            </div>
+            <h2 id="agHello">Ready when you are</h2>
+            <p>Happy to help with whatever you need.</p>
+          </div>
+          <div class="chat" id="chat" aria-live="polite"></div>
+        </div>
+      </div>
+
+      <div class="ag-bottom">
+        <div class="ag-col">
+          <div class="ag-sugs" id="agSugs"></div>
+          <form class="ag-compose" id="agForm">
+            <label for="agInput" class="sr-only">Message the agent</label>
+            <textarea id="agInput" rows="2" maxlength="1000" placeholder="Write a privacy policy for my business"></textarea>
+            <div class="ag-compose__row">
+              <button type="button" class="ag-ibtn" id="agPlus" aria-label="Add files"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+              <span style="flex:1"></span>
+              <button type="button" class="ag-ibtn" id="agMic" aria-label="Voice input"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+              <button type="submit" class="ag-send" id="agSend" aria-label="Send" disabled><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+            </div>
+          </form>
+          <p class="ag-foot">AI can make mistakes. Double-check replies.</p>
+        </div>
+      </div>
+    </section>
   </div>
 
   <div class="modal" id="modal" hidden>

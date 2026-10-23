@@ -174,6 +174,10 @@ async function handle(req, res) {
 
     res.writeHead(200, { 'content-type': 'text/event-stream; charset=utf-8', 'cache-control': 'no-cache, no-transform', 'x-accel-buffering': 'no', connection: 'keep-alive' })
     const emit = (event, data) => res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)
+    // Each chat in the Agent workspace keeps its own conversation history.
+    const chatId = /^[a-z0-9-]{1,40}$/i.test(String(body.chat || '')) ? body.chat : 'main'
+    s.chats ??= new Map()
+    s.messages = s.chats.get(chatId) || []
     try {
       await runTurn(s, text, emit, newActionId, (type, placement) => record(body.session, type, placement))
     } catch (e) {
@@ -184,6 +188,10 @@ async function handle(req, res) {
         : e.status === 404 ? 'The AI model name was not recognised (check ANTHROPIC_MODEL).'
         : 'The assistant hit a problem. Please try again.'
       emit('error', { message: msg })
+    } finally {
+      s.chats.delete(chatId)
+      s.chats.set(chatId, s.messages)
+      while (s.chats.size > 20) s.chats.delete(s.chats.keys().next().value)
     }
     return res.end()
   }

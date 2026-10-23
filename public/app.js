@@ -94,6 +94,7 @@ async function boot() {
   const d = await api(`/api/state?session=${app.session}${persona ? '&persona=' + encodeURIComponent(persona) : ''}`)
   apply(d)
   bindUi()
+  loadChats()
   if (location.hash === '#agent') setView('agent', { push: false, focus: false })
   track('view', 'page')
   track('view', 'sale-banner')
@@ -116,7 +117,6 @@ function apply(d) {
 function render() {
   const s = app.data
   $('#greeting').textContent = `Hi, ${s.customer.firstName}! How can I help you today?`
-  $('#agentWelcomeTitle').textContent = `Hi, ${s.customer.firstName}! I'm your Quayside Agent`
   $('#avatar').setAttribute('aria-label', `Account: ${s.customer.firstName}`)
   $('#avatar').title = s.customer.firstName
   const urgent = s.nba.filter(n => n.tone === 'urgent').length
@@ -125,6 +125,7 @@ function render() {
   $('#personaSel').innerHTML = s.personas.map(p => `<option value="${esc(p.id)}" ${p.id === s.persona ? 'selected' : ''}>${esc(p.label)}</option>`).join('')
   $('#agentInfo').textContent = app.agent?.live ? `Knows your account, prices and limits · ${app.agent.model}` : 'Knows your account, prices and limits · demo mode'
   renderChips()
+  renderSuggestions()
   renderPromo()
   renderTodos()
   renderSites()
@@ -345,21 +346,131 @@ async function propose(action, placement) {
 
 function closeModal() { $('#modal').hidden = true; $('#modalBody').innerHTML = '' }
 
+// ───────────────────────── agent chats ─────────────────────────
+// Each chat has its own id; the server keeps a separate history per chat id.
+// The list (titles + rendered transcript) is kept in this browser so it survives a reload.
+
+const CHATS_KEY = 'qp-chats'
+app.chats = []
+app.chatId = newChatId()
+
+function newChatId() { return 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6) }
+
+function loadChats() {
+  try {
+    const d = JSON.parse(localStorage.getItem(CHATS_KEY) || 'null')
+    if (d && d.session === app.session && d.persona === app.data.persona && Array.isArray(d.chats)) app.chats = d.chats.slice(0, 20)
+  } catch { /* storage unavailable */ }
+  renderChatList()
+}
+
+function saveChats() {
+  const chat = $('#chat')
+  if (chat.children.length) {
+    const html = chat.innerHTML
+    const entry = app.chats.find(c => c.id === app.chatId)
+    if (entry) entry.html = html
+  }
+  try {
+    let chats = app.chats
+    for (;;) {
+      const json = JSON.stringify({ session: app.session, persona: app.data.persona, chats })
+      if (json.length < 400000 || chats.length <= 1) { localStorage.setItem(CHATS_KEY, json); break }
+      chats = chats.slice(0, -1)
+    }
+  } catch { /* storage full or blocked */ }
+  renderChatList()
+}
+
+function renderChatList() {
+  const list = $('#agChats')
+  list.innerHTML = app.chats.length
+    ? app.chats.map(c => `<button class="ag-chat ${c.id === app.chatId ? 'is-on' : ''}" data-chat="${esc(c.id)}" title="${esc(c.title)}">${esc(c.title)}</button>`).join('')
+    : '<p class="ag-chats__empty">No chats yet</p>'
+}
+
+function showChat(html) {
+  $('#chat').innerHTML = html || ''
+  $('#agentApp').classList.toggle('has-msgs', Boolean(html))
+  renderChatList()
+  scrollChat()
+}
+
+function newChat() {
+  if (app.busy) return
+  saveChats()
+  app.chatId = newChatId()
+  showChat('')
+  closeAgentSide()
+  $('#agInput').focus()
+}
+
+function openChat(id) {
+  if (app.busy || id === app.chatId) return closeAgentSide()
+  saveChats()
+  const c = app.chats.find(x => x.id === id)
+  if (!c) return
+  app.chatId = id
+  showChat(c.html)
+  closeAgentSide()
+}
+
+function resetChats() {
+  app.chats = []
+  app.chatId = newChatId()
+  showChat('')
+  saveChats()
+}
+
+const SUGGESTIONS = [
+  { cls: 's-tag', icon: '<path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-9 9z"/><circle cx="7.5" cy="7.5" r="1.5"/><path d="M19 3v4M17 5h4"/>' },
+  { cls: 's-mail', icon: '<rect x="4" y="6" width="16" height="12" rx="2"/><path d="m4 8 8 5 8-5"/>' },
+  { cls: 's-pen', icon: '<path d="M16 3l5 5L8 21H3v-5z"/>' },
+  { cls: 's-mega', icon: '<path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1zM15 9a4 4 0 0 1 0 6"/>' },
+]
+
+function renderSuggestions() {
+  const s = app.data
+  const store = s.sites.find(x => x.orders30d)
+  const texts = [
+    store ? 'Get your store ready for Black Friday' : 'Get my website ready for more visitors',
+    'Write my next newsletter',
+    "I'm out of blog ideas",
+    'Write a week of social posts',
+  ]
+  $('#agSugs').innerHTML = texts.map((t, i) => `<button class="ag-sug" data-ask="${esc(t)}" data-track="agent:suggestion">
+    <span class="ag-sug__i ${SUGGESTIONS[i].cls}" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${SUGGESTIONS[i].icon}</svg></span>${esc(t)}</button>`).join('')
+  $('#agHello').textContent = `Ready when you are, ${s.customer.firstName}`
+}
+
 // ───────────────────────── chat ─────────────────────────
 
-function scrollChat() { window.scrollTo({ top: document.documentElement.scrollHeight }) }
+function scrollChat() { const el = $('#agScroll'); if (el) el.scrollTop = el.scrollHeight }
+
+function setBusy(on) {
+  app.busy = on
+  $('#sendBtn').disabled = on
+  syncSend()
+}
+
+function syncSend() { $('#agSend').disabled = app.busy || !$('#agInput').value.trim() }
 
 async function ask(text) {
   text = text.trim()
   if (!text || app.busy) return
-  app.busy = true
-  $('#sendBtn').disabled = true
-  const input = $('#askInput')
-  input.value = ''
-  autosize()
-
   setView('agent', { focus: false })
-  $('#main').classList.add('has-msgs')
+  setBusy(true)
+  $('#askInput').value = ''
+  $('#agInput').value = ''
+  autosize($('#askInput')); autosize($('#agInput')); syncSend()
+
+  if (!app.chats.some(c => c.id === app.chatId)) {
+    app.chats.unshift({ id: app.chatId, title: text.slice(0, 80), html: '' })
+    if (app.chats.length > 20) app.chats.length = 20
+  }
+  $('#agentApp').classList.add('has-msgs')
+  renderChatList()
+
   const chat = $('#chat')
   chat.insertAdjacentHTML('beforeend', `<div class="msg-user">${esc(text)}</div>`)
   const bot = document.createElement('div')
@@ -372,7 +483,7 @@ async function ask(text) {
   const status = bot.querySelector('.status')
   let raw = ''
   try {
-    const res = await fetch('/api/chat', { method: 'POST', headers: { 'content-type': 'application/json', accept: 'text/event-stream' }, body: JSON.stringify({ session: app.session, message: text }) })
+    const res = await fetch('/api/chat', { method: 'POST', headers: { 'content-type': 'application/json', accept: 'text/event-stream' }, body: JSON.stringify({ session: app.session, chat: app.chatId, message: text }) })
     if (!res.ok || !(res.headers.get('content-type') || '').includes('event-stream')) {
       const d = await res.json().catch(() => ({}))
       throw new Error(d.error || 'Something went wrong.')
@@ -398,19 +509,42 @@ async function ask(text) {
         else if (ev === 'error') throw new Error(data.message)
       }
     }
-    status.hidden = true
+    status.remove()
     if (!raw.trim()) md.innerHTML = '<p class="muted">(No reply.)</p>'
     else showRating()
   } catch (e) {
-    status.hidden = true
+    status.remove()
     bot.classList.add('is-error')
     md.textContent = e.message
-    if (!input.value) input.value = text
+    if (!$('#agInput').value) { $('#agInput').value = text; autosize($('#agInput')) }
   } finally {
-    app.busy = false
-    $('#sendBtn').disabled = false
+    setBusy(false)
+    saveChats()
     scrollChat()
   }
+}
+
+// ───────────────────────── voice input ─────────────────────────
+
+let recog = null
+function toggleMic() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition
+  if (!SR) return toast('Voice input isn\'t supported in this browser.')
+  if (recog) { recog.stop(); return }
+  recog = new SR()
+  recog.lang = navigator.language || 'en-GB'
+  recog.interimResults = true
+  const input = $('#agInput')
+  const before = input.value ? input.value.trimEnd() + ' ' : ''
+  recog.onresult = e => {
+    input.value = before + [...e.results].map(r => r[0].transcript).join('')
+    autosize(input); syncSend()
+  }
+  recog.onend = () => { recog = null; $('#agMic').classList.remove('is-rec') }
+  recog.onerror = e => { if (e.error === 'not-allowed') toast('Microphone access was blocked.') }
+  $('#agMic').classList.add('is-rec')
+  track('click', 'agent:mic')
+  recog.start()
 }
 
 function markdown(src) {
@@ -432,10 +566,9 @@ function markdown(src) {
   return out.join('')
 }
 
-function autosize() {
-  const el = $('#askInput')
+function autosize(el = $('#askInput')) {
   el.style.height = 'auto'
-  el.style.height = Math.min(el.scrollHeight, 160) + 'px'
+  el.style.height = Math.min(el.scrollHeight, el.id === 'agInput' ? 200 : 160) + 'px'
 }
 
 // ───────────────────────── rating card ─────────────────────────
@@ -462,47 +595,53 @@ function toggleMenu(open) {
   $('#scrim').hidden = !open
 }
 
-// ───────────────────────── views: Home / Agent ─────────────────────────
+// ───────────────────────── views: Home / Agent workspace ─────────────────────────
 
 let view = 'home'
+let lastFocus = null
 function setView(v, { focus = true, push = true } = {}) {
   v = v === 'agent' ? 'agent' : 'home'
   toggleMenu(false)
   const changed = v !== view
   view = v
-  $('#main').classList.toggle('view-agent', v === 'agent')
-  document.body.classList.toggle('is-agent', v === 'agent')
-  $('#navHome').classList.toggle('is-active', v === 'home')
-  $('#navAgent').classList.toggle('is-active', v === 'agent')
-  $('#agentBtn').classList.toggle('is-on', v === 'agent')
-  document.title = v === 'agent' ? 'Quayside — Agent (concept demo)' : 'Quayside — Home (concept demo)'
-  if (push && location.hash !== (v === 'agent' ? '#agent' : '')) history.pushState(null, '', v === 'agent' ? '#agent' : location.pathname + location.search)
-  if (changed) {
-    if (v === 'agent') { track('view', 'agent-page'); scrollChat() } else window.scrollTo({ top: 0 })
-  }
-  if (v === 'agent' && focus) setTimeout(() => $('#askInput').focus(), 50)
+  const open = v === 'agent'
+  if (open && changed) lastFocus = document.activeElement
+  $('#agentApp').hidden = !open
+  document.documentElement.classList.toggle('agent-open', open)
+  $('#navHome').classList.toggle('is-active', !open)
+  $('#navAgent').classList.toggle('is-active', open)
+  $('#agentBtn').classList.toggle('is-on', open)
+  document.title = open ? 'Quayside — Agent (concept demo)' : 'Quayside — Home (concept demo)'
+  if (push && location.hash !== (open ? '#agent' : '')) history.pushState(null, '', open ? '#agent' : location.pathname + location.search)
+  if (changed && open) { track('view', 'agent-page'); scrollChat() }
+  if (changed && !open) { closeAgentSide(); lastFocus?.focus?.() }
+  if (open && focus) setTimeout(() => $('#agInput').focus(), 60)
 }
 
-function clearChat() {
-  $('#chat').innerHTML = ''
-  $('#main').classList.remove('has-msgs')
+const narrow = () => matchMedia('(max-width: 899.98px)').matches
+function toggleAgentSide() {
+  const ag = $('#agentApp')
+  if (narrow()) { const on = !ag.classList.contains('side-open'); ag.classList.toggle('side-open', on); $('#agScrim').hidden = !on }
+  else ag.classList.toggle('side-hidden')
 }
+function closeAgentSide() { $('#agentApp').classList.remove('side-open'); $('#agScrim').hidden = true }
 
 function bindUi() {
   document.addEventListener('click', e => {
     const tracked = e.target.closest('[data-track]')
     if (tracked) track('click', tracked.dataset.track)
 
-    const t = e.target.closest('[data-ask],[data-propose],[data-decide],[data-demo],[data-dot],[data-view],#todoMore,#promoDismiss')
+    const t = e.target.closest('[data-ask],[data-propose],[data-decide],[data-demo],[data-dot],[data-view],[data-chat],#todoMore,#promoDismiss')
     if (!t) return
     if (t.dataset.ask) { toggleMenu(false); ask(t.dataset.ask) }
     else if (t.dataset.propose) propose(JSON.parse(t.dataset.propose), t.dataset.placement || 'other')
     else if (t.dataset.decide) decide(t.closest('.offer'), t.dataset.decide)
     else if (t.dataset.dot !== undefined) { app.promoIndex = Number(t.dataset.dot); renderPromo() }
     else if (t.dataset.view) { e.preventDefault(); setView(t.dataset.view) }
+    else if (t.dataset.chat) openChat(t.dataset.chat)
     else if (t.id === 'todoMore') { app.showAllTodos = !app.showAllTodos; renderTodos() }
     else if (t.id === 'promoDismiss') { app.promoHidden = true; renderPromo(); toast('Deals hidden for this visit') }
-    else if (t.hasAttribute('data-demo')) { toggleMenu(false); toast('Only Home and Agent are part of this concept demo.') }
+    else if (t.hasAttribute('data-demo')) { toggleMenu(false); toast(view === 'agent' ? 'Only chats are part of this concept demo.' : 'Only Home and Agent are part of this concept demo.') }
   })
 
   $('#askForm').addEventListener('submit', e => { e.preventDefault(); ask($('#askInput').value) })
@@ -522,7 +661,23 @@ function bindUi() {
     toast('Thanks for the feedback!')
   })
   $('#rateClose').addEventListener('click', () => { rated = true; $('#rate').hidden = true; track('click', 'feedback:close') })
-  $('#clearChat').addEventListener('click', () => { clearChat(); $('#askInput').focus() })
+  $('#agForm').addEventListener('submit', e => { e.preventDefault(); ask($('#agInput').value) })
+  $('#agInput').addEventListener('input', () => { autosize($('#agInput')); syncSend() })
+  $('#agInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); ask($('#agInput').value) }
+  })
+  $('#agNew').addEventListener('click', newChat)
+  $('#agClose').addEventListener('click', () => setView('home'))
+  $('#agSideToggle').addEventListener('click', toggleAgentSide)
+  $('#agScrim').addEventListener('click', closeAgentSide)
+  $('#agChatsToggle').addEventListener('click', e => {
+    const b = e.currentTarget
+    b.setAttribute('aria-expanded', b.getAttribute('aria-expanded') === 'false' ? 'true' : 'false')
+  })
+  $('#agBannerX').addEventListener('click', () => { $('#agBanner').hidden = true; track('click', 'agent:banner-close') })
+  $('#agFeedback').addEventListener('click', () => { rated = false; $('#rate').hidden = false; track('click', 'agent:feedback') })
+  $('#agPlus').addEventListener('click', () => toast('Adding files isn\'t part of this concept demo.'))
+  $('#agMic').addEventListener('click', toggleMic)
   $('#agentBtn').addEventListener('click', () => setView('agent'))
   $('#askPlus').addEventListener('click', () => $('#askInput').focus())
   window.addEventListener('popstate', () => setView(location.hash === '#agent' ? 'agent' : 'home', { push: false, focus: false }))
@@ -547,24 +702,29 @@ function bindUi() {
 
   $('#personaSel').addEventListener('change', async e => {
     const d = await api('/api/reset', { persona: e.target.value })
-    clearChat()
     app.showAllTodos = false
     app.promoIndex = 0
     apply(d)
+    resetChats()
     toast(`Now viewing as ${app.data.customer.firstName}`)
   })
   $('#resetBtn').addEventListener('click', async () => {
     const d = await api('/api/reset', { persona: app.data.persona })
-    clearChat()
     app.promoHidden = false
     apply(d)
+    resetChats()
     toast('Demo account reset')
   })
 
   $('#menuBtn').addEventListener('click', () => toggleMenu(true))
   $('#scrim').addEventListener('click', () => toggleMenu(false))
   $('#modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal() })
-  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#modal').hidden) closeModal() })
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return
+    if (!$('#modal').hidden) closeModal()
+    else if ($('#agentApp').classList.contains('side-open')) closeAgentSide()
+    else if (view === 'agent') setView('home')
+  })
 }
 
 boot().catch(e => {
