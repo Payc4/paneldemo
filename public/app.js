@@ -300,7 +300,7 @@ function tickCountdown() {
 const PAGE_TITLES = {
   home: 'Home', websites: 'Websites', 'domains/search': 'Domain search', 'domains/transfer': 'Transfer domain',
   'domains/dns': 'DNS / Nameservers', 'domains/contacts': 'Contact profiles',
-  emails: 'Emails', services: 'More services', 'marketing/email': 'Email marketing', 'marketing/ads': 'Google Ads', vps: 'VPS', ecommerce: 'Ecommerce',
+  emails: 'Emails', services: 'More services', 'marketing/email': 'Email marketing', 'marketing/ads': 'Google Ads', vps: 'VPS', ecommerce: 'Ecommerce', gpu: 'GPU', api: 'API', router: 'AI Router',
 }
 const WEB_FILTERS = {
   wordpress: { label: 'WordPress', test: p => /wordpress/i.test(p) },
@@ -308,7 +308,7 @@ const WEB_FILTERS = {
   apps: { label: 'Web Apps', test: p => /node|app|react|next|python/i.test(p) },
   php: { label: 'PHP/HTML', test: p => /php|html|static/i.test(p) },
 }
-const ROUTES = new Set(['home', 'websites', ...Object.keys(WEB_FILTERS).map(k => 'websites/' + k), 'domains/search', 'domains/transfer', 'domains/dns', 'domains/contacts', 'emails', 'services', 'marketing/email', 'marketing/ads', 'vps', 'ecommerce'])
+const ROUTES = new Set(['home', 'websites', ...Object.keys(WEB_FILTERS).map(k => 'websites/' + k), 'domains/search', 'domains/transfer', 'domains/dns', 'domains/contacts', 'emails', 'services', 'marketing/email', 'marketing/ads', 'vps', 'ecommerce', 'gpu', 'api', 'router'])
 
 app.page = 'home'
 app.web = { q: '', layout: 'grid', collapsed: false, starred: new Set() }
@@ -397,12 +397,16 @@ function renderPage() {
     : r === 'marketing/ads' ? pageAds()
     : section === 'vps' ? pageVps()
     : section === 'ecommerce' ? pageEcommerce()
+    : section === 'gpu' ? pageGpu()
+    : section === 'api' ? pageApi()
+    : section === 'router' ? pageRouter()
     : sub === 'search' ? pageDomainSearch()
     : sub === 'transfer' ? pageTransfer()
     : sub === 'dns' ? pageDns()
     : pageContacts()
   if (section === 'websites') renderWebGrid()
   if (section === 'services') renderServices()
+  if (section === 'api' && app.api.tab === 'connect') playApiDemo()
 }
 
 const crumbs = (...parts) => `<nav class="crumbs" aria-label="Breadcrumb">
@@ -1053,7 +1057,7 @@ function pageEcommerce() {
 // ── Agent workspace: sub-pages ──
 
 app.agentView = 'chat'
-const AG_TITLES = { files: 'Files', skills: 'Skills', projects: 'Projects', apps: 'Apps' }
+const AG_TITLES = { files: 'Files', skills: 'Skills', projects: 'Projects', apps: 'Apps', jobs: 'Jobs' }
 
 function agentShow(v) {
   app.agentView = AG_TITLES[v] ? v : 'chat'
@@ -1293,6 +1297,219 @@ function bindAgentExtras() {
     const t = e.target.closest('[data-term]')
     if (t) { app.ecomTerm = Number(t.dataset.term); renderPage() }
   })
+}
+
+// ── GPU ──
+
+const GPUS = [
+  ['B200', '192GB VRAM', '€4,02/hr', true], ['B200 (Dedicated)', '192GB VRAM', '€6,32/hr', true],
+  ['RTX PRO 6000 (Server)', '96GB VRAM', '€0,58/hr', false], ['A100', '80GB VRAM', '€1,38/hr', false],
+  ['L40S', '48GB VRAM', '€0,86/hr', true], ['RTX 5090', '32GB VRAM', '€0,57/hr', false], ['RTX 4090', '24GB VRAM', '€0,38/hr', false],
+]
+const CHIP = '<rect x="6" y="6" width="12" height="12" rx="2"/><rect x="9.5" y="9.5" width="5" height="5" rx="1"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/>'
+app.gpuPick = null
+
+function pageGpu() {
+  const feat = (ic, h, p) => `<article class="gpu-feat"><span class="gpu-feat__icon">${I(ic, 18, 1.8)}</span><h3>${h}</h3><p>${p}</p></article>`
+  return `<div class="pg pg--mid gpu-page">
+    <h1 class="pg-title">GPU</h1>
+    <section class="gpu-hero">
+      <div class="gpu-hero__text"><h2>Build and scale with GPU power</h2>
+        <p>Train models, run inference, and handle demanding workloads on high-performance GPU infrastructure.</p>
+        <button class="gpu-hero__btn" data-gpu-start>Get started</button></div>
+      <div class="gpu-hero__art" aria-hidden="true">
+        <div class="gpu-ring r1"></div><div class="gpu-ring r2"></div><div class="gpu-ring r3"></div>
+        <div class="gpu-deploy">${I(CHIP, 22, 1.8)}<span>Deploy</span></div>
+        <svg class="gpu-cursor" viewBox="0 0 24 24" width="54" height="54"><path d="M5 3v17l5-5 3 7 3-1.4-3-6.6h7z" fill="#fff" stroke="#14102A" stroke-width="1.2"/></svg>
+      </div>
+    </section>
+    <div class="gpu-feats">
+      ${feat(ICON.sparkle, 'Run AI projects without limits', 'Train models, run inference, and process large datasets with dedicated GPU resources. Scale on demand without managing hardware.')}
+      ${feat('<circle cx="12" cy="12" r="9"/><path d="M12 12l4-4M7 15a6 6 0 0 1 10 0"/>', 'Launch GPU instances in seconds', 'Create and start GPU instances from Quayside in a few clicks. Skip lengthy setup and get your workloads running faster.')}
+      ${feat('<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>', 'Power demanding workloads', 'Handle rendering, large AI models, and parallel processing tasks with dedicated GPU performance built for compute-heavy workloads.')}
+    </div>
+    <div class="gpu-head" id="gpuList"><h2>Choose GPU instance</h2>
+      <div class="gpu-credit"><span>Credit balance</span><b>0</b><button class="btn-dark" data-route="router">Top up</button></div></div>
+    <section class="pg-card gpu-list">${GPUS.map(([n, v, p, ok], i) => `<div class="gpu-row ${app.gpuPick === i ? 'is-on' : ''}">
+      <span class="gpu-row__logo">${I(CHIP, 18, 1.8)}</span>
+      <div class="gpu-row__text"><b>${n}</b><small>${v} • From ${p}</small></div>
+      ${ok ? `<button class="gpu-row__btn" data-gpu="${i}">${app.gpuPick === i ? 'Selected' : 'Select'}</button>` : '<button class="gpu-row__btn" disabled title="Currently unavailable">Select</button>'}
+    </div>`).join('')}</section>
+  </div>`
+}
+
+// ── API ──
+
+const API_TOOLS = {
+  Editors: [['Claude Code', '#D97757'], ['Cursor', '#1D1E20'], ['Codex', '#5B7CF7'], ['VS Code', '#1F8AD2'], ['Devin Desktop', '#2BB5A0'], ['Antigravity', '#4C7DF0']],
+  Terminal: [['Claude Code CLI', '#D97757'], ['Gemini CLI', '#4C7DF0'], ['Codex CLI', '#5B7CF7']],
+  Other: [['Any MCP client', '#673DE6'], ['REST API', '#36344D']],
+}
+const API_EXAMPLES = [
+  ['Is coffeelab.com available?', 'Yes — **coffeelab.com** is available. Want me to register it and connect it to your site?'],
+  ['Point blog.lunaclay-studio.com to my new site', "Done. I added a CNAME record for **blog** and issued a free SSL certificate. It'll be live in about 10 minutes."],
+  ['Back up lunaclay-studio.com now', 'Backup started. I\'ll tell you when it finishes — usually under 5 minutes.'],
+]
+app.api = { tab: 'connect', tool: 'Claude Code', mode: 'one', open: { Editors: true, Terminal: false, Other: false }, tools: 'all' }
+let apiDemoTimer = null
+
+function pageApi() {
+  const a = app.api
+  const logo = (n, c, size = 26) => `<span class="api-logo" style="--c:${c};width:${size}px;height:${size}px">${esc(n.split(' ')[0].slice(0, 2))}</span>`
+  const color = Object.values(API_TOOLS).flat().find(t => t[0] === a.tool)?.[1] || '#673DE6'
+  return `<div class="pg pg--mid">
+    <div class="pg-head"><h1>API</h1><button class="btn-outline btn-outline--sm">Documentation ${I(ICON2.ext, 13, 2)}</button></div>
+    <p class="api-lead">Let your AI agent build sites, manage domains and more, right from your editor or terminal.</p>
+    <div class="tabs api-tabs" role="tablist">
+      <button role="tab" class="tab ${a.tab === 'connect' ? 'is-on' : ''}" aria-selected="${a.tab === 'connect'}" data-apitab="connect">Connect your tools</button>
+      <button role="tab" class="tab ${a.tab === 'tokens' ? 'is-on' : ''}" aria-selected="${a.tab === 'tokens'}" data-apitab="tokens">API tokens <span class="tab-count">${(app.apiTokens || []).length}</span></button>
+    </div>
+    ${a.tab === 'tokens' ? apiTokens() : `<section class="pg-card api-box">
+      <div class="api-body">
+        <nav class="api-tools" aria-label="Tools">${Object.entries(API_TOOLS).map(([g, list]) => `
+          <button class="api-group" data-apigroup="${g}" aria-expanded="${a.open[g]}">${g}${I(a.open[g] ? '<path d="m6 15 6-6 6 6"/>' : '<path d="m6 9 6 6 6-6"/>', 14, 2)}</button>
+          ${a.open[g] ? list.map(([n, c]) => `<button class="api-tool ${a.tool === n ? 'is-on' : ''}" data-apitool="${esc(n)}">${logo(n, c)}${esc(n)}</button>`).join('') : ''}`).join('')}
+        </nav>
+        <div class="api-main">
+          <div class="api-main__head">${logo(a.tool, color, 30)}<b>Connect ${esc(a.tool)}</b>
+            <div class="seg seg--text"><button class="${a.mode === 'one' ? 'is-on' : ''}" data-apimode="one">One-click install</button><button class="${a.mode === 'manual' ? 'is-on' : ''}" data-apimode="manual">Manual setup</button></div></div>
+          ${a.mode === 'one' ? `<div class="api-install"><div><b>Install</b><p>Opens ${esc(a.tool)} with a prompt that installs the Quayside plugin.</p>
+              <small>${I(ICON2.lockS, 12, 1.8)}No API key needed <span>${I('<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>', 12, 1.8)}macOS, Windows and Linux</span></small></div>
+            <button class="btn btn-primary">Install in ${esc(a.tool)} ${I(ICON2.ext, 14, 2)}</button></div>`
+          : `<div class="api-manual"><b>Add the Quayside MCP server</b><p>Paste this into ${esc(a.tool)}'s MCP settings, then sign in when asked.</p>
+              <div class="api-code"><code>{ "mcpServers": { "quayside": { "url": "https://mcp.quayside.app/sse" } } }</code><button class="btn-outline btn-outline--sm" data-copy='{ "mcpServers": { "quayside": { "url": "https://mcp.quayside.app/sse" } } }'>Copy</button></div></div>`}
+          <div class="api-demo"><b>What you can do</b><p>Approve the Quayside sign-in once, then ask your agent in plain words.</p>
+            <div class="api-chat"><div class="api-chat__head"><span>${esc(a.tool)}</span><em>Example</em></div>
+              <div class="api-chat__body" id="apiChat"></div>
+              <div class="api-chat__input"><span>Ask your agent anything</span>${I('<path d="M12 19V5M5 12l7-7 7 7"/>', 14, 2)}</div></div></div>
+        </div>
+      </div>
+      <button class="api-adv" data-apiadv aria-expanded="${Boolean(a.adv)}">${I('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>', 17, 1.6)}
+        <b>Advanced options</b><span>Choose which tools your agent can use</span><em>${{ all: 'All tools on', read: 'Read-only', custom: 'Custom' }[a.tools]}</em>${I(a.adv ? '<path d="m6 15 6-6 6 6"/>' : '<path d="m6 9 6 6 6-6"/>', 14, 2)}</button>
+      ${a.adv ? `<div class="api-advbox">${[['all', 'All tools on', 'Your agent can read and make changes, like registering domains or editing DNS. You approve purchases.'], ['read', 'Read-only', 'Your agent can look things up but cannot change anything.']].map(([k, h, p]) => `<button class="api-opt ${a.tools === k ? 'is-on' : ''}" data-apitools="${k}"><span class="radio"></span><span><b>${h}</b><small>${p}</small></span></button>`).join('')}</div>` : ''}
+    </section>`}
+  </div>`
+}
+
+function apiTokens() {
+  const list = app.apiTokens || []
+  return `<section class="pg-card api-tokens">
+    <div class="api-tokens__head"><div><b>API tokens</b><p>Use a token to call the Quayside API from your own scripts.</p></div><button class="btn btn-primary btn-sm" data-newtoken>Create token</button></div>
+    ${list.length ? `<ul class="api-tokens__list">${list.map((t, i) => `<li><code>${esc(t.key)}</code><span>${esc(t.name)} · created ${esc(t.date)}</span><button class="link small" data-deltoken="${i}">Delete</button></li>`).join('')}</ul>` : '<p class="api-tokens__empty">No tokens yet.</p>'}
+  </section>`
+}
+
+function playApiDemo() {
+  clearTimeout(apiDemoTimer)
+  const box = $('#apiChat')
+  if (!box) return
+  let i = 0
+  const step = () => {
+    const el = $('#apiChat')
+    if (!el) return
+    const [q, aText] = API_EXAMPLES[i % API_EXAMPLES.length]
+    el.innerHTML = `<div class="api-q">${esc(q)}</div><div class="api-a"><span class="api-a__dots"><i></i><i></i><i></i></span></div>`
+    apiDemoTimer = setTimeout(() => {
+      const el2 = $('#apiChat'); if (!el2) return
+      el2.querySelector('.api-a').innerHTML = markdown(aText)
+      i++; apiDemoTimer = setTimeout(step, 3600)
+    }, 1300)
+  }
+  step()
+}
+
+// ── AI Router ──
+
+app.routerPick = 250
+function pageRouter() {
+  const packs = [[250, '€2,99'], [500, '€4,99'], [2000, '€17,99'], [5000, '€43,99']]
+  const feats = [
+    ['<path d="M10 6h11M10 12h11M10 18h11M3 6h2M4 5v4M3 12h3l-3 4h3M3 18h3"/>', 'Use every major model, one balance', 'Access ChatGPT, Claude, Gemini, and more without separate accounts or bills.'],
+    ['<path d="M4 7h14l-3-3M20 17H6l3 3"/>', 'Switch models without touching your code', 'OpenAI SDK compatible, so you can change models without rewriting your app.'],
+    ['<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/>', 'Pay only for what you use', "Credits are metered per request, so you're never locked into a fixed monthly cost."],
+    ['<path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/>', 'Cut costs with prompt caching', 'Repeated content is served from cache automatically, so heavy usage costs less over time.'],
+    ['<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>', 'Connect to your AI apps instantly', 'Works automatically with OpenClaw and Hermes Agent in Quayside. No extra keys, no extra setup.'],
+    ['<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>', 'Track spend as you go', 'See credits used, tokens processed, and cache savings in one place, so nothing is a surprise.'],
+  ]
+  const card = (ic, h, p) => `<article class="gpu-feat"><span class="gpu-feat__icon">${I(ic, 18, 1.8)}</span><h3 class="light">${h}</h3><p>${p}</p></article>`
+  return `<div class="pg pg--mid">
+    <section class="gpu-hero rt-hero">
+      <div class="gpu-hero__text"><h2>Power any AI app through one simple gateway</h2>
+        <p>One AI gateway to every major AI model, powered by a single balance of AI credits.</p>
+        <button class="gpu-hero__btn" data-rt-start>Get started</button></div>
+      <div class="gpu-hero__art rt-art" aria-hidden="true">
+        <div class="gpu-ring r1"></div><div class="gpu-ring r2"></div><div class="gpu-ring r3"></div>
+        <div class="rt-key">${QMARK(64)}</div>
+        <svg class="gpu-cursor rt-cursor" viewBox="0 0 24 24" width="46" height="46"><path d="M5 3v17l5-5 3 7 3-1.4-3-6.6h7z" fill="#fff" stroke="#14102A" stroke-width="1.2"/></svg>
+        ${[['8%', '22%', '#3E8BF0'], ['32%', '14%', '#D97757'], ['72%', '10%', '#fff'], ['4%', '60%', '#fff'], ['86%', '40%', '#F0A030'], ['88%', '68%', '#E5383B'], ['12%', '86%', '#5B7CF7']].map(([l, t, c], i) => `<span class="rt-model" style="left:${l};top:${t};--c:${c}">${['◆', '✱', '≋', '◎', '▲', '∿', '◐'][i]}</span>`).join('')}
+      </div>
+    </section>
+    <div class="gpu-feats">
+      ${card('<circle cx="8" cy="15" r="4"/><path d="m11 12 9-9M17 6l3 3M15 8l2 2"/>', 'One API for every model', 'Access GPT, Claude, DeepSeek, Grok and more through a single API key. Works with tools you already use.')}
+      ${card('<path d="M9 3h6l-1.5 4h-3zM6 21h12a2 2 0 0 0 2-2c0-5-3.5-10-8-10S4 14 4 19a2 2 0 0 0 2 2z"/><path d="M12 12v6"/>', 'Price and performance', 'Pick the right model for each job and pay from one shared pool of AI credits, so you keep spend under control without giving up speed.')}
+      ${card('<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>', 'Built-in integration', 'Connects automatically to Quayside AI apps like OpenClaw and Hermes Agent. No extra keys, no extra setup.')}
+    </div>
+    <h2 class="rt-title" id="rtPacks">Top up your credits</h2>
+    <div class="ecom__grid rt-grid">
+      <ul class="ecom__feats rt-feats">${feats.map(([ic, h, p]) => `<li>${I(ic, 19, 1.7)}<div><h3>${h}</h3><p>${p}</p></div></li>`).join('')}</ul>
+      <div class="ecom__buy">
+        <div class="ecom__opts" role="radiogroup" aria-label="Credit pack">
+          <div class="ecom__popular">Recommended</div>
+          ${packs.map(([n, p], i) => `<button role="radio" aria-checked="${app.routerPick === n}" class="ecom__opt rt-opt ${i ? 'ecom__opt--plain' : ''} ${app.routerPick === n ? 'is-on' : ''}" data-pack="${n}"><span class="radio"></span><b>Quayside Credits ${n}</b><strong class="rt-price">${p}</strong></button>`).join('')}
+        </div>
+        <button class="btn btn-primary rt-buy">Purchase credits</button>
+        <p class="ecom__fine">Prices exclude taxes</p>
+      </div>
+    </div>
+  </div>`
+}
+
+function bindPages4() {
+  const page = $('#page')
+  page.addEventListener('click', e => {
+    const t = e.target.closest('[data-gpu],[data-gpu-start],[data-rt-start],[data-pack],[data-apitab],[data-apitool],[data-apigroup],[data-apimode],[data-apiadv],[data-apitools],[data-copy],[data-newtoken],[data-deltoken]')
+    if (!t) return
+    const d = t.dataset
+    if (d.gpu) { app.gpuPick = app.gpuPick === Number(d.gpu) ? null : Number(d.gpu); return renderPage() }
+    if ('gpuStart' in d) return $('#gpuList')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    if ('rtStart' in d) return $('#rtPacks')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    if (d.pack) { app.routerPick = Number(d.pack); return renderPage() }
+    if (d.apitab) app.api.tab = d.apitab
+    else if (d.apitool) app.api.tool = d.apitool
+    else if (d.apigroup) app.api.open[d.apigroup] = !app.api.open[d.apigroup]
+    else if (d.apimode) app.api.mode = d.apimode
+    else if ('apiadv' in d) app.api.adv = !app.api.adv
+    else if (d.apitools) app.api.tools = d.apitools
+    else if (d.copy) { navigator.clipboard?.writeText(d.copy).catch(() => {}); return toast('Copied') }
+    else if ('newtoken' in d) {
+      const key = 'qs_' + Array.from(crypto.getRandomValues?.(new Uint8Array(12)) || [], b => b.toString(16).padStart(2, '0')).join('')
+      ;(app.apiTokens ||= []).push({ key: key.slice(0, 10) + '…' + key.slice(-4), name: `Token ${app.apiTokens.length + 1}`, date: new Date().toISOString().slice(0, 10) })
+    } else if (d.deltoken !== undefined) app.apiTokens.splice(Number(d.deltoken), 1)
+    renderPage()
+  })
+}
+
+// ── Agent: Jobs ──
+
+AG_PAGES.jobs = () => {
+  const blur = (rows) => `<ul class="proj__blur" aria-hidden="true">${rows.map(([t, s]) => `<li><i></i><span><b>${t}</b><small>${s}</small></span></li>`).join('')}</ul>`
+  return `<div class="agp agp--narrow">
+    <h1>Jobs</h1><p class="agp__sub">Let your agent run tasks on a schedule or when something happens in your apps.</p>
+    <section class="proj">
+      <div class="proj__head"><b>Inbox</b><span class="proj__tag">Example results</span><span class="proj__plus">${I(ICON2.lockS, 11, 2)}Plus</span></div>
+      <div class="proj__body">${blur([['Weekly SEO report', 'Completed · 3 new issues found'], ['Competitor price check', 'Completed · 2 prices changed'], ['Daily sales summary', 'Completed · €1,240 yesterday'], ['New reviews digest', 'Completed · 4 new reviews']])}
+        <div class="proj__upsell jobs-upsell">
+          <div class="proj__upsell-head"><span>${I(ICON2.clock, 18, 1.7)}</span><div><b>Let your agent work while you are away</b><small>Jobs are included in Agent Plus</small></div></div>
+          <ul><li>${I(ICON2.tick, 13, 2.4)}Schedule any task daily, weekly or monthly</li><li>${I(ICON2.tick, 13, 2.4)}Get results in your inbox, ready to review</li></ul>
+          <div class="proj__actions"><button class="btn btn-primary btn-sm">Upgrade to Agent Plus</button><button class="link small">Learn more</button></div>
+        </div></div>
+    </section>
+    <section class="proj jobs-active">
+      <div class="proj__head"><b>Active</b><span class="proj__tag">Example jobs</span><span class="proj__plus">${I(ICON2.lockS, 11, 2)}Plus</span></div>
+      <div class="proj__body jobs-active__body">${blur([['Weekly SEO report', 'Every Monday at 09:00'], ['Competitor price check', 'Every day at 07:00'], ['Daily sales summary', 'Every day at 18:00']])}
+        <button class="jobs-unlock">${I(ICON2.lockS, 14, 1.8)}Unlock scheduled jobs</button></div>
+    </section>
+  </div>`
 }
 
 // ───────────────────────── offer cards ─────────────────────────
@@ -1680,6 +1897,7 @@ function bindUi() {
   })
   $('#agBannerX').addEventListener('click', () => { $('#agBanner').hidden = true; track('click', 'agent:banner-close') })
   bindAgentExtras()
+  bindPages4()
   $('#agPlus').addEventListener('click', () => $('#agInput').focus())
   $('#agMic').addEventListener('click', toggleMic)
   $('#agentBtn').addEventListener('click', () => { setView('agent'); agentShow('chat') })
