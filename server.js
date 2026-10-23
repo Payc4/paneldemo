@@ -7,7 +7,7 @@
 
 import { createServer } from 'node:http'
 import { readFile, stat } from 'node:fs/promises'
-import { randomUUID } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 import { extname, join, normalize } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { newAccount, personas, publicState, quote } from './lib/commerce.js'
@@ -16,6 +16,18 @@ import { record, reset as resetStats, statsHtml, validPlacement } from './lib/st
 
 const PORT = Number(process.env.PORT || 3000)
 const PUBLIC = fileURLToPath(new URL('./public/', import.meta.url))
+
+// Cache-busting: index.html links styles.css and app.js with a content hash (?v=…), so a browser
+// never pairs a new page with an old stylesheet or script after a deploy.
+const ASSET_VERSIONS = {}
+async function versionedIndex() {
+  let html = await readFile(join(PUBLIC, 'index.html'), 'utf8')
+  for (const name of ['styles.css', 'app.js']) {
+    ASSET_VERSIONS[name] ??= createHash('sha256').update(await readFile(join(PUBLIC, name))).digest('hex').slice(0, 10)
+    html = html.replaceAll(`"/${name}"`, `"/${name}?v=${ASSET_VERSIONS[name]}"`)
+  }
+  return html
+}
 const DAILY_LIMIT = Number(process.env.DAILY_CHAT_LIMIT || 1000)
 const PER_IP = { max: 25, windowMs: 10 * 60 * 1000 }
 const SESSION_TTL = 6 * 3600 * 1000
@@ -205,11 +217,13 @@ async function handle(req, res) {
   try {
     const st = await stat(file)
     if (!st.isFile()) throw new Error('not a file')
-    const data = await readFile(file)
-    res.writeHead(200, { 'content-type': MIME[extname(file)] || 'application/octet-stream', 'cache-control': path === '/index.html' ? 'no-cache' : 'public, max-age=300', ...securityHeaders })
+    const data = path === '/index.html' ? await versionedIndex() : await readFile(file)
+    const versioned = url.searchParams.get('v') && url.searchParams.get('v') === ASSET_VERSIONS[path.slice(1)]
+    const cache = path === '/index.html' ? 'no-cache' : versioned ? 'public, max-age=31536000, immutable' : /\.(css|js)$/.test(path) ? 'no-cache' : 'public, max-age=300'
+    res.writeHead(200, { 'content-type': MIME[extname(file)] || 'application/octet-stream', 'cache-control': cache, ...securityHeaders })
     return res.end(req.method === 'HEAD' ? undefined : data)
   } catch {
-    const data = await readFile(join(PUBLIC, 'index.html'))
+    const data = await versionedIndex()
     res.writeHead(200, { 'content-type': MIME['.html'], 'cache-control': 'no-cache', ...securityHeaders })
     return res.end(data)
   }
