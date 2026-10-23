@@ -7,6 +7,21 @@ const eur = n => '€' + Number(n).toFixed(2)
 const num = n => Number(n).toLocaleString('en-GB')
 const attrJson = o => esc(JSON.stringify(o))
 
+const PROMO_ART = `<svg viewBox="0 0 300 176" preserveAspectRatio="xMaxYMid slice">
+  <circle cx="250" cy="20" r="86" fill="#FFC62E"/>
+  <circle cx="250" cy="20" r="86" fill="none" stroke="#1C1606" stroke-opacity=".12" stroke-width="18"/>
+  <g transform="translate(96 70) rotate(-12 60 30)">
+    <path d="M0 30L22 8h96a10 10 0 0 1 10 10v26a10 10 0 0 1-10 10H22z" fill="#fff"/>
+    <circle cx="20" cy="31" r="5" fill="#1C1606"/>
+    <text x="38" y="41" font-family="Geist, system-ui, sans-serif" font-size="24" font-weight="800" fill="#1C1606">SALE</text>
+  </g>
+  <g transform="translate(268 126)"><circle r="22" fill="#E8A400" stroke="#1C1606" stroke-width="3"/><circle r="15" fill="none" stroke="#1C1606" stroke-opacity=".35" stroke-width="2"/><text y="8" text-anchor="middle" font-family="Geist, system-ui, sans-serif" font-size="22" font-weight="800" fill="#1C1606">€</text></g>
+  <g transform="translate(214 154)"><circle r="13" fill="#FFD45C" stroke="#1C1606" stroke-width="2.5"/><text y="5" text-anchor="middle" font-family="Geist, system-ui, sans-serif" font-size="13" font-weight="800" fill="#1C1606">%</text></g>
+  <path d="M104 40l3 8 8 3-8 3-3 8-3-8-8-3 8-3z" fill="#FFC62E"/>
+  <path d="M196 150l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="#fff"/>
+  <circle cx="150" cy="150" r="3" fill="#FFC62E"/><circle cx="90" cy="120" r="2.5" fill="#fff" fill-opacity=".6"/>
+</svg>`
+
 const app = { session: null, data: null, agent: null, activity: [], busy: false, showAllTodos: false, promoIndex: 0, promoHidden: false }
 
 // ───────────────────────── tracking ─────────────────────────
@@ -136,7 +151,7 @@ function renderPromo() {
         </div>
       </div>
     </div>
-    <div class="promo__art" aria-hidden="true"><i></i><i></i><i></i></div>
+    <div class="promo__art" aria-hidden="true">${PROMO_ART}</div>
     <button class="promo__dismiss" id="promoDismiss" aria-label="Hide deals" data-track="promo:dismiss">✕</button>`
   $('#promoDots').innerHTML = list.map((x, i) => `<button class="dot ${i === app.promoIndex ? 'is-on' : ''}" data-dot="${i}" aria-label="Deal ${i + 1}"></button>`).join('')
   track('view', 'promo:' + p.id)
