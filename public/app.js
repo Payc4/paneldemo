@@ -35,13 +35,25 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
 
 // ───────────────────────── boot ─────────────────────────
 
+// crypto.randomUUID only exists on https pages; build a v4 UUID by hand on plain http.
+function uuid() {
+  if (window.crypto?.randomUUID) return crypto.randomUUID()
+  const b = new Uint8Array(16)
+  if (window.crypto?.getRandomValues) crypto.getRandomValues(b)
+  else for (let i = 0; i < 16; i++) b[i] = Math.floor(Math.random() * 256)
+  b[6] = (b[6] & 0x0f) | 0x40
+  b[8] = (b[8] & 0x3f) | 0x80
+  const h = [...b].map(x => x.toString(16).padStart(2, '0')).join('')
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`
+}
+
 function sessionId() {
   try {
     let id = localStorage.getItem('qp-session')
-    if (!id) { id = crypto.randomUUID(); localStorage.setItem('qp-session', id) }
+    if (!id || !/^[0-9a-f-]{36}$/.test(id)) { id = uuid(); localStorage.setItem('qp-session', id) }
     return id
   } catch {
-    return crypto.randomUUID()
+    return uuid()
   }
 }
 
