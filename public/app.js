@@ -300,7 +300,7 @@ function tickCountdown() {
 const PAGE_TITLES = {
   home: 'Home', websites: 'Websites', 'domains/search': 'Domain search', 'domains/transfer': 'Transfer domain',
   'domains/dns': 'DNS / Nameservers', 'domains/contacts': 'Contact profiles',
-  emails: 'Emails', services: 'More services', 'marketing/email': 'Email marketing', 'marketing/ads': 'Google Ads', vps: 'VPS',
+  emails: 'Emails', services: 'More services', 'marketing/email': 'Email marketing', 'marketing/ads': 'Google Ads', vps: 'VPS', ecommerce: 'Ecommerce',
 }
 const WEB_FILTERS = {
   wordpress: { label: 'WordPress', test: p => /wordpress/i.test(p) },
@@ -308,7 +308,7 @@ const WEB_FILTERS = {
   apps: { label: 'Web Apps', test: p => /node|app|react|next|python/i.test(p) },
   php: { label: 'PHP/HTML', test: p => /php|html|static/i.test(p) },
 }
-const ROUTES = new Set(['home', 'websites', ...Object.keys(WEB_FILTERS).map(k => 'websites/' + k), 'domains/search', 'domains/transfer', 'domains/dns', 'domains/contacts', 'emails', 'services', 'marketing/email', 'marketing/ads', 'vps'])
+const ROUTES = new Set(['home', 'websites', ...Object.keys(WEB_FILTERS).map(k => 'websites/' + k), 'domains/search', 'domains/transfer', 'domains/dns', 'domains/contacts', 'emails', 'services', 'marketing/email', 'marketing/ads', 'vps', 'ecommerce'])
 
 app.page = 'home'
 app.web = { q: '', layout: 'grid', collapsed: false, starred: new Set() }
@@ -396,6 +396,7 @@ function renderPage() {
     : r === 'marketing/email' ? pageEmailMarketing()
     : r === 'marketing/ads' ? pageAds()
     : section === 'vps' ? pageVps()
+    : section === 'ecommerce' ? pageEcommerce()
     : sub === 'search' ? pageDomainSearch()
     : sub === 'transfer' ? pageTransfer()
     : sub === 'dns' ? pageDns()
@@ -1007,6 +1008,293 @@ function bindPops() {
   $('#page').addEventListener('input', e => { if (e.target.id === 'svcSearch') { app.svc.q = e.target.value; renderServices() } })
 }
 
+// ── Ecommerce ──
+
+app.ecomTerm = 12
+function pageEcommerce() {
+  const feats = [
+    [ICON.tag, 'Sell anything you want', 'Physical and digital products, subscriptions, gift cards, and more.'],
+    ['<rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><path d="M13.5 16.75h6.5M16.75 13.5V20"/>', 'Unlimited products, unlimited channels', 'Sell everywhere your customers are.'],
+    ['<path d="M9 3h6l-1.5 4h-3zM6 21h12a2 2 0 0 0 2-2c0-5-3.5-10-8-10S4 14 4 19a2 2 0 0 0 2 2z"/><path d="M12 12v6M10 16.5c0 .8.9 1.5 2 1.5s2-.7 2-1.5-.9-1.3-2-1.5-2-.7-2-1.5.9-1.5 2-1.5 2 .7 2 1.5"/>', '0% transaction fees', 'Keep everything you earn.'],
+    ['<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/>', '100+ secure ways to get paid', 'Apple Pay, Google Pay, Stripe, PayPal and more.'],
+    [ICON.wand, 'AI product tools', 'Create and manage products faster with AI.'],
+    ['<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>', 'Share a link, start selling instantly', 'Share a payment link on social media, WhatsApp, or in a DM.'],
+    [ICON.grid, 'One dashboard', 'Inventory, orders, customers, discounts, taxes, and analytics.'],
+  ]
+  const t = app.ecomTerm
+  return `<div class="pg ecom">
+    <h1 class="ecom__title">Everything you need to sell online, in one plan</h1>
+    <ul class="ecom__badges">
+      <li>${I('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/>', 15, 1.8)}0% transaction fees</li>
+      <li>${I(ICON2.shield, 15, 1.8)}30-day money-back guarantee</li>
+      <li>${I('<path d="M4 14v-2a8 8 0 0 1 16 0v2M4 14a2 2 0 0 1 2-2h1v6H6a2 2 0 0 1-2-2zM20 14a2 2 0 0 0-2-2h-1v6h1a2 2 0 0 0 2-2z"/>', 15, 1.8)}24/7 support</li>
+    </ul>
+    <div class="ecom__grid">
+      <ul class="ecom__feats">${feats.map(([ic, h, p]) => `<li>${I(ic, 21, 1.6)}<div><h3>${h}</h3><p>${p}</p></div></li>`).join('')}</ul>
+      <div class="ecom__buy">
+        <div class="ecom__opts" role="radiogroup" aria-label="Billing period">
+          <div class="ecom__popular">Most popular</div>
+          <button role="radio" aria-checked="${t === 12}" class="ecom__opt ${t === 12 ? 'is-on' : ''}" data-term="12">
+            <span class="radio"></span><b>12 months</b>
+            <span class="ecom__price"><span class="ecom__was"><s>€10,99</s><em>55% OFF</em></span><span><strong>€4,99</strong> /mo</span></span>
+          </button>
+          <button role="radio" aria-checked="${t === 1}" class="ecom__opt ecom__opt--plain ${t === 1 ? 'is-on' : ''}" data-term="1">
+            <span class="radio"></span><b>1 month</b>
+            <span class="ecom__price"><span><strong>€10,99</strong> /mo</span></span>
+          </button>
+        </div>
+        <button class="ecom__choose">Choose plan</button>
+        <p class="ecom__fine">Renews at €7,99/mo. Prices exclude applicable taxes. Unlimited features are subject to our Fair Usage Policy.</p>
+      </div>
+    </div>
+  </div>`
+}
+
+// ── Agent workspace: sub-pages ──
+
+app.agentView = 'chat'
+const AG_TITLES = { files: 'Files', skills: 'Skills', projects: 'Projects', apps: 'Apps' }
+
+function agentShow(v) {
+  app.agentView = AG_TITLES[v] ? v : 'chat'
+  const chat = app.agentView === 'chat'
+  $('#agPanel').hidden = chat
+  $('#agScroll').hidden = !chat
+  document.querySelector('.ag-bottom').hidden = !chat
+  document.querySelectorAll('#agentApp [data-agview]').forEach(b => b.classList.toggle('is-on', b.dataset.agview === app.agentView))
+  if (!chat) { $('#agPanel').innerHTML = AG_PAGES[app.agentView](); track('view', 'agent:' + app.agentView) }
+  closeAgentSide()
+}
+
+const AG_PAGES = {
+  files: () => `<div class="agp">
+    <h1>Files</h1><p class="agp__sub">Files created and shared in your chats</p>
+    <label class="agp__search">${I(ICON.search, 15)}<span class="sr-only">Search files</span><input type="search" placeholder="Search files..."></label>
+    <div class="agp__tabsrow"><div class="agp__tabs" role="tablist">
+      <button role="tab" class="is-on" aria-selected="true">All 0</button><button role="tab" aria-selected="false">Files 0</button><button role="tab" aria-selected="false">Media 0</button></div>
+      <div class="agp__layout"><button class="is-on" aria-label="List view">${I(ICON.list, 16)}</button><button aria-label="Grid view">${I(ICON.grid, 16)}</button></div></div>
+    <div class="agp__empty">${I('<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>', 38, 1.4)}<p>No files yet.</p></div>
+  </div>`,
+
+  skills: () => {
+    const groups = [
+      ['FOR YOU', 'c-orange', [['Based on AI Memory', ICON.sparkle, 'free']]],
+      ['CUSTOM', 'c-violet', [['Your skills', ICON.wand, 'plus']]],
+      ['ANALYZE', 'c-blue', [['Business Advisor', ICON2.check], ['SEO Consultant', ICON2.trend], ['Legal Advisor', ICON2.shield]]],
+      ['CREATE', 'c-violet', [['Creative Writer', '<path d="M16 3l5 5L8 21H3v-5z"/>'], ['Customer Comms', '<path d="M4 5h16v11H8l-4 4z"/><path d="M8 9h8M8 12h5"/>']]],
+      ['GROW', 'c-green', [['Marketing Planner', '<path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1zM15 9a4 4 0 0 1 0 6"/>'], ['Sales & Outreach', '<circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/><circle cx="12" cy="6" r="2"/><path d="M12 8v3M7 16l4-5M17 16l-4-5"/>']]],
+    ]
+    return `<div class="agp agp--wide">
+      <h1>What would you like help with?</h1><p class="agp__sub">Pick a specialist, then the part of the job.</p>
+      <label class="agp__search agp__search--full">${I(ICON.search, 16)}<span class="sr-only">Search skills</span><input type="search" id="skillSearch" placeholder="Search skills"></label>
+      <div class="skill-groups">${groups.map(([g, c, items]) => `<div class="skill-group ${c}" style="flex:${items.length}"><span class="skill-group__label">${g}</span><div class="skill-group__items">
+        ${items.map(([n, ic, tag]) => `<button class="skill-tile" ${tag === 'free' ? 'data-agmodal="memory"' : ''}>${!tag ? `<span class="skill-tile__lock" aria-label="Plus">${I(ICON2.lockS, 13, 1.8)}</span>` : ''}<span class="skill-tile__icon">${I(ic, 18, 1.8)}</span>
+          <span class="skill-tile__name">${n}${tag === 'free' ? ' <em class="free">FREE</em>' : tag === 'plus' ? ` <em class="plus">${I(ICON2.lockS, 10, 2)}Plus</em> <em class="cnt">0/50</em>` : ''}</span></button>`).join('')}
+      </div></div>`).join('')}</div>
+      <div class="skill-list" id="skillList">${SKILLS.map(([h, p]) => skillRow(h, p)).join('')}</div>
+    </div>`
+  },
+
+  projects: () => `<div class="agp agp--wide">
+    <h1>Projects</h1><p class="agp__sub">Group chats with shared instructions.</p>
+    <section class="proj">
+      <div class="proj__head"><b>Projects</b><span class="proj__tag">Example projects</span><span class="proj__plus">${I(ICON2.lockS, 11, 2)}Plus</span></div>
+      <div class="proj__body">
+        <ul class="proj__blur" aria-hidden="true">${['Online store launch', 'Marketing strategies', 'Blog and SEO', 'Brand voice'].map((t, i) => `<li><i></i><span><b>${t}</b><small>${[6, 4, 12, 3][i]} chats · Instructions set</small></span></li>`).join('')}</ul>
+        <div class="proj__upsell">
+          <div class="proj__upsell-head"><span>${I('<path d="M3 9a2 2 0 0 1 2-2h4l2 2h6a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M7 7V6a2 2 0 0 1 2-2h3l2 2h5a2 2 0 0 1 2 2v7"/>', 18, 1.7)}</span><div><b>Keep every project in its own space</b><small>Projects are included in Agent Plus</small></div></div>
+          <ul><li>${I(ICON2.tick, 13, 2.4)}Group related chats in one place</li><li>${I(ICON2.tick, 13, 2.4)}Set instructions once, every chat follows them</li></ul>
+          <div class="proj__actions"><button class="btn btn-primary btn-sm">Upgrade to Agent Plus</button><button class="link small">Learn more</button></div>
+        </div>
+      </div>
+    </section>
+  </div>`,
+
+  apps: () => {
+    const tab = app.appsTab || 'popular'
+    return `<div class="agp agp--wide">
+      <h1>Connections</h1><p class="agp__sub">Connect the apps you use so Quayside Agent can act on your behalf.</p>
+      <div class="conn-plus"><span class="conn-plus__icon">${I(ICON2.lockS, 18, 1.7)}</span><div><b>App connections are included in Agent Plus</b><small>Your agent can read, write and take action in the tools you already use.</small></div><button class="btn btn-primary btn-sm">Upgrade to Agent Plus</button></div>
+      <div class="conn-bar"><div class="seg seg--text" role="tablist">${[['popular', 'Popular'], ['all', 'All'], ['mcp', 'Custom MCP']].map(([k, l]) => `<button role="tab" class="${tab === k ? 'is-on' : ''}" aria-selected="${tab === k}" data-apptab="${k}">${l}</button>`).join('')}</div>
+        <label class="agp__search conn-search">${I(ICON.search, 16)}<span class="sr-only">Search apps</span><input type="search" id="appSearch" placeholder="Search apps" value="${esc(app.appQ || '')}"></label></div>
+      <div id="appList">${appListHtml()}</div>
+    </div>`
+  },
+}
+
+const SKILLS = [
+  ['Pricing and renewal costs', 'Check what a plan costs to buy now and what it renews at'],
+  ['Referrals and Partner Program', 'Check your referral rewards, commissions and Partner Program status'],
+  ['Renew a service', 'Renew your existing plan or domain before it expires'],
+  ['Unrecognized charge', 'Trace a Quayside charge on your statement and find out what it was for'],
+  ['Find the right plan', 'Get a plan recommendation for what you are building, with a payment link'],
+  ['AI Builder agentic mode', 'Get help with an app you are building by prompting Quayside AI Builder'],
+  ['AI Builder manual mode', 'Get help editing your site in the Quayside AI Builder editor'],
+  ['Builder store', 'Fix payments, shipping or orders on a Quayside store.'],
+  ['Change a mistyped domain', 'Swap a domain you registered by mistake for the name you meant'],
+  ['Set up domain forwarding', 'Point one of your domains at another, checked before it goes live'],
+  ['Domain move between accounts', 'Move a Quayside domain to another Quayside account.'],
+  ['Domain not resolving', 'Find out why your domain does not load or points to the wrong place'],
+  ['Email mailbox management', 'Change existing mailboxes, passwords, forwards and aliases.'],
+  ['Email not sending or arriving', 'Diagnose delivery problems with email on your Quayside domain'],
+  ['Email setup and client', 'Set up email on a domain and connect a mail app.'],
+]
+const skillRow = (h, p) => `<button class="skill-row" data-ask="${esc(`Help me with: ${h}. ${p}.`)}" data-skill="${esc((h + ' ' + p).toLowerCase())}"><span><b>${esc(h)}</b><small>${esc(p)}</small></span>${I(ICON.chevR, 16, 2)}</button>`
+
+const APPS = [
+  ['Quayside Mail', '#673DE6', 'Read, search and send email from your Quayside mailboxes.', [], true],
+  ['Gmail', '#D93025', 'Read, search and send email, and act on new messages as they arrive.', ['New email received', 'Email with label added']],
+  ['Slack', '#4A154B', 'Post messages, read channels and threads, and react to new activity in your workspace.', ['New message in channel', 'You were mentioned']],
+  ['Google Calendar', '#1A73E8', 'Create events, check availability and get reminders before meetings.', ['Event starting soon', 'New event created']],
+  ['Notion', '#1D1E20', 'Search, create and update pages and databases in your workspace.', ['Page updated', 'New database item']],
+  ['Google Drive', '#188038', 'Find, read and organise files and folders, and share them with others.', ['New file in folder', 'File updated']],
+  ['GitHub', '#24292F', 'Work with repositories, issues and pull requests.', ['New issue opened', 'Pull request merged']],
+  ['Linear', '#5E6AD2', 'Create and update issues, and keep track of projects and cycles.', ['Issue created', 'Issue status changed']],
+  ['HubSpot', '#E8590C', 'Manage contacts, deals and marketing emails in your CRM.', ['New contact', 'Deal stage changed']],
+  ['Stripe', '#635BFF', 'Look up payments, customers and subscriptions.', ['Payment succeeded', 'Subscription cancelled']],
+  ['Outlook', '#0F6CBD', 'Read and send email and manage your calendar.', ['New email received', 'Event starting soon']],
+]
+const APP_SECTIONS = [['Featured', APPS.slice(0, 10).map(a => a[0])], ['Communication', ['Quayside Mail', 'Gmail', 'Outlook', 'Slack']]]
+app.openTriggers = new Set()
+
+function appCard(name) {
+  const [n, color, desc, triggers, own] = APPS.find(a => a[0] === name)
+  const key = n.toLowerCase().replace(/\W+/g, '-')
+  const open = app.openTriggers.has(key)
+  return `<div class="conn-app">
+    <span class="conn-app__logo" style="background:${color}">${own ? QMARK(36) : esc(n.split(' ').map(w => w[0]).join('').slice(0, 2))}</span>
+    <div class="conn-app__text"><b>${esc(n)}</b><p>${esc(desc)}</p>
+      ${triggers.length ? `<button class="conn-app__trig" data-trig="${key}" aria-expanded="${open}">${I(ICON.sparkle, 13, 2)}Triggers${I('<path d="m6 9 6 6 6-6"/>', 13, 2)}</button>${open ? `<ul class="conn-app__triggers">${triggers.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}` : ''}</div>
+    <button class="conn-app__btn">${I(ICON2.lockS, 13, 1.8)}Connect</button>
+  </div>`
+}
+
+function appListHtml() {
+  const tab = app.appsTab || 'popular'
+  const q = (app.appQ || '').trim().toLowerCase()
+  if (tab === 'mcp') return `<section class="conn-mcp"><b>Add a custom MCP server</b><p>Connect any tool that speaks the Model Context Protocol by pasting its server URL.</p>
+    <div class="conn-mcp__row"><input type="url" placeholder="https://your-server.example/mcp" aria-label="MCP server URL"><button class="btn btn-primary btn-sm">${I(ICON2.lockS, 13, 2)} Add server</button></div></section>`
+  const match = n => !q || `${n} ${APPS.find(a => a[0] === n)[2]}`.toLowerCase().includes(q)
+  const sections = tab === 'all' || q ? [[q ? 'Results' : 'All apps', APPS.map(a => a[0])]] : APP_SECTIONS
+  const html = sections.map(([title, names]) => {
+    const list = names.filter(match)
+    return list.length ? `<h2 class="conn-title">${title}</h2><div class="conn-grid">${list.map(appCard).join('')}</div>` : ''
+  }).join('')
+  return html || '<p class="agp__none">No apps match your search.</p>'
+}
+
+// ── Agent pop-ups: memory, WhatsApp, mobile ──
+
+const COUNTRIES = [['NL', '+31'], ['LT', '+370'], ['LV', '+371'], ['EE', '+372'], ['PL', '+48'], ['DE', '+49'], ['GB', '+44'], ['UA', '+380'], ['US', '+1']]
+const AG_MODALS = {
+  memory: () => `<button class="ag-modal__x" data-agclose aria-label="Close">${I(ICON2.x, 18, 2)}</button>
+    <h2 class="ag-modal__title">Let Quayside Agent remember your setup</h2>
+    <ul class="mem-list">
+      <li>${I('<path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5M12 7v5l3 2"/>', 18, 1.8)}<div><b>No repeating yourself</b><small>Pick up right where you left off.</small></div></li>
+      <li>${I('<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>', 18, 1.8)}<div><b>Problems caught early</b><small>Quayside Agent flags issues in your setup before you ask.</small></div></li>
+      <li>${I('<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0z"/>', 18, 1.8)}<div><b>Personalised advice</b><small>Answers built on your goals, not generic ones.</small></div></li>
+    </ul>
+    <button class="btn btn-primary ag-modal__wide" data-memory="on">Turn on AI memory</button>
+    <button class="ag-modal__later" data-agclose>Maybe later</button>
+    <p class="ag-modal__fine">Quayside Agent remembers useful details from your onboarding, conversations (e.g. with Quayside Agent, Quayside AI Builder), and activity across Quayside, so every interaction feels tailored to you. <button class="link small" type="button">Privacy Policy</button></p>`,
+
+  whatsapp: () => `<button class="ag-modal__x" data-agclose aria-label="Close">${I(ICON2.x, 18, 2)}</button>
+    <span class="wa-label">${I('<path d="M4 20l1.4-4A8 8 0 1 1 8 18.6z"/>', 12, 2.2)}WHATSAPP</span>
+    <h2 class="ag-modal__title ag-modal__title--sm">Take Quayside Agent with you</h2>
+    <ul class="wa-checks"><li>${I(ICON2.tick, 12, 2.6)}Instant replies, 24/7</li><li>${I(ICON2.tick, 12, 2.6)}Websites &amp; domains on the go</li><li>${I(ICON2.tick, 12, 2.6)}Job results as they finish</li></ul>
+    <form class="wa-form" id="waForm">
+      <label for="waNumber"><b>Your WhatsApp number</b></label>
+      <div class="wa-field">
+        <select id="waCountry" aria-label="Country code">${COUNTRIES.map(([c, d]) => `<option value="${d}">${c} ${d}</option>`).join('')}</select>
+        <input id="waNumber" type="tel" inputmode="tel" placeholder="415 555 0132" autocomplete="tel-national">
+        <button class="btn btn-primary btn-sm" type="submit">Save</button>
+      </div>
+      <p class="wa-help" id="waHelp">So Quayside Agent knows it's you when you message.</p>
+    </form>`,
+
+  mobile: () => `<button class="ag-modal__x" data-agclose aria-label="Close">${I(ICON2.x, 18, 2)}</button>
+    <h2 class="ag-modal__title">Quayside Agent, in your pocket</h2>
+    <p class="ag-modal__lead">Join the waitlist and be among the first to try the Quayside Agent app on your phone.</p>
+    <b class="mob-h">What's planned</b>
+    <ul class="mob-plan">
+      <li><span class="c-violet">${I(ICON2.trend, 17, 1.8)}</span><div><b>Insights that matter</b><small>Get the updates that matter to your business, the moment they happen.</small></div></li>
+      <li><span class="c-green">${I('<circle cx="9" cy="20" r="1.5"/><circle cx="17" cy="20" r="1.5"/><path d="M3 4h2l2.5 11h11L21 7H6.5"/>', 17, 1.8)}</span><div><b>Your store, anywhere</b><small>Manage orders, products and customers from wherever you are.</small></div></li>
+      <li><span class="c-orange">${I('<path d="M5 15c-1.5 1.5-2 5-2 5s3.5-.5 5-2M14 4c3-1.5 6-1 6-1s.5 3-1 6l-6 6-5-5z"/><path d="M9 10 5 9l-2 2 4 1M14 15l1 4-2 2-1-4"/><circle cx="15.5" cy="8.5" r="1.5"/>', 17, 1.8)}</span><div><b>Build and run your business on the go</b><small>Start a new website or business and keep it running, all from your phone.</small></div></li>
+    </ul>
+    <b class="mob-h">Your phone</b>
+    <div class="mob-os" role="radiogroup" aria-label="Your phone">
+      <button role="radio" aria-checked="false" data-os="iOS">${I('<rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/>', 17, 1.8)}iOS</button>
+      <button role="radio" aria-checked="false" data-os="Android">${I('<rect x="6" y="3" width="12" height="18" rx="2"/><path d="M6 6h12M6 18h12"/>', 17, 1.8)}Android</button>
+    </div>
+    <button class="btn ag-modal__wide mob-join" id="mobJoin" disabled>Join waitlist</button>
+    <button class="ag-modal__later" data-agclose>Not interested</button>`,
+}
+
+function showAgModal(kind) {
+  $('#agModalBox').innerHTML = AG_MODALS[kind]()
+  $('#agModalBox').setAttribute('aria-label', { memory: 'AI memory', whatsapp: 'WhatsApp', mobile: 'Mobile app' }[kind])
+  $('#agModal').hidden = false
+  track('view', 'agent:modal-' + kind)
+  setTimeout(() => ($('#agModalBox').querySelector('input, .btn-primary') || $('#agModalBox').querySelector('button'))?.focus(), 30)
+}
+function closeAgModal() { $('#agModal').hidden = true; $('#agModalBox').innerHTML = '' }
+
+function maybeAskMemory() {
+  try { if (localStorage.getItem('qp-memory')) return } catch { return }
+  setTimeout(() => { if (view === 'agent' && $('#agModal').hidden) showAgModal('memory') }, 350)
+}
+function setMemoryAnswer(v) { try { localStorage.setItem('qp-memory', v) } catch {} }
+
+function bindAgentExtras() {
+  const ag = $('#agentApp')
+  $('#agChannels').addEventListener('click', () => {
+    const open = $('#agChannels').getAttribute('aria-expanded') !== 'true'
+    $('#agChannels').setAttribute('aria-expanded', String(open))
+    $('#agChanSub').hidden = !open
+  })
+  ag.addEventListener('click', e => {
+    const v = e.target.closest('[data-agview]')
+    if (v) return agentShow(v.dataset.agview)
+    const m = e.target.closest('[data-agmodal]')
+    if (m) return showAgModal(m.dataset.agmodal)
+    if (e.target.id === 'agModal') { if ($('#agModalBox').querySelector('.mem-list')) setMemoryAnswer('later'); return closeAgModal() }
+    if (e.target.closest('[data-agclose]')) { if ($('#agModalBox').querySelector('.mem-list')) setMemoryAnswer('later'); return closeAgModal() }
+    if (e.target.closest('[data-memory]')) { setMemoryAnswer('on'); closeAgModal(); return toast('AI memory is on') }
+    const os = e.target.closest('[data-os]')
+    if (os) {
+      $('#agModalBox').querySelectorAll('[data-os]').forEach(b => { const on = b === os; b.classList.toggle('is-on', on); b.setAttribute('aria-checked', String(on)) })
+      $('#mobJoin').disabled = false; $('#mobJoin').classList.add('btn-primary'); $('#mobJoin').dataset.chosen = os.dataset.os
+      return
+    }
+    if (e.target.closest('#mobJoin')) { const osName = $('#mobJoin').dataset.chosen; closeAgModal(); track('click', 'agent:waitlist'); return toast(`You're on the waitlist for the ${osName} app`) }
+    const tab = e.target.closest('[data-apptab]')
+    if (tab) { app.appsTab = tab.dataset.apptab; return agentShow('apps') }
+    const trig = e.target.closest('[data-trig]')
+    if (trig) { const k = trig.dataset.trig; app.openTriggers.has(k) ? app.openTriggers.delete(k) : app.openTriggers.add(k); $('#appList').innerHTML = appListHtml(); return }
+    if (e.target.closest('[data-refer]')) $('#referBtn').click()
+  })
+  ag.addEventListener('submit', e => {
+    if (e.target.id !== 'waForm') return
+    e.preventDefault()
+    const num = $('#waNumber').value.replace(/[^\d]/g, '')
+    if (num.length < 6) { $('#waHelp').textContent = 'Enter your phone number without the country code.'; $('#waHelp').classList.add('is-error'); return $('#waNumber').focus() }
+    const full = `${$('#waCountry').value} ${$('#waNumber').value.trim()}`
+    closeAgModal(); track('click', 'agent:whatsapp-saved')
+    toast(`Saved ${full}. Message Quayside Agent on WhatsApp any time.`)
+  })
+  ag.addEventListener('input', e => {
+    if (e.target.id === 'skillSearch') {
+      const q = e.target.value.trim().toLowerCase()
+      ag.querySelectorAll('.skill-row').forEach(r => { r.hidden = q && !r.dataset.skill.includes(q) })
+    }
+    if (e.target.id === 'appSearch') { app.appQ = e.target.value; $('#appList').innerHTML = appListHtml() }
+  })
+  $('#page').addEventListener('click', e => {
+    const t = e.target.closest('[data-term]')
+    if (t) { app.ecomTerm = Number(t.dataset.term); renderPage() }
+  })
+}
+
 // ───────────────────────── offer cards ─────────────────────────
 
 function offerHtml(card, id) {
@@ -1139,8 +1427,8 @@ function resetChats() {
 const SUGGESTIONS = [
   { cls: 's-tag', icon: '<path d="M3 12V4a1 1 0 0 1 1-1h8l9 9-9 9z"/><circle cx="7.5" cy="7.5" r="1.5"/><path d="M19 3v4M17 5h4"/>' },
   { cls: 's-mail', icon: '<rect x="4" y="6" width="16" height="12" rx="2"/><path d="m4 8 8 5 8-5"/>' },
-  { cls: 's-pen', icon: '<path d="M16 3l5 5L8 21H3v-5z"/>' },
   { cls: 's-mega', icon: '<path d="M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1zM15 9a4 4 0 0 1 0 6"/>' },
+  { cls: 's-pen', icon: '<path d="M16 3l5 5L8 21H3v-5z"/>' },
 ]
 
 function renderSuggestions() {
@@ -1148,9 +1436,9 @@ function renderSuggestions() {
   const store = s.sites.find(x => x.orders30d)
   const texts = [
     store ? 'Get your store ready for Black Friday' : 'Get my website ready for more visitors',
-    'Write my next newsletter',
-    "I'm out of blog ideas",
+    'Chase emails nobody answered',
     'Write a week of social posts',
+    'Make my product irresistible',
   ]
   $('#agSugs').innerHTML = texts.map((t, i) => `<button class="ag-sug" data-ask="${esc(t)}" data-track="agent:suggestion">
     <span class="ag-sug__i ${SUGGESTIONS[i].cls}" aria-hidden="true"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${SUGGESTIONS[i].icon}</svg></span>${esc(t)}</button>`).join('')
@@ -1173,6 +1461,7 @@ async function ask(text) {
   text = text.trim()
   if (!text || app.busy) return
   setView('agent', { focus: false })
+  if (app.agentView !== 'chat') agentShow('chat')
   setBusy(true)
   $('#askInput').value = ''
   $('#agInput').value = ''
@@ -1327,7 +1616,7 @@ function setView(v, { focus = true, push = true } = {}) {
   document.title = open ? 'Quayside — Agent' : `Quayside — ${PAGE_TITLES[app.page] || 'Websites'}`
   const pageHash = app.page === 'home' ? '' : '#' + app.page
   if (push && location.hash !== (open ? '#agent' : pageHash)) history.pushState(null, '', open ? '#agent' : (pageHash || location.pathname + location.search))
-  if (changed && open) { track('view', 'agent-page'); scrollChat() }
+  if (changed && open) { track('view', 'agent-page'); scrollChat(); maybeAskMemory() }
   if (changed && !open) { closeAgentSide(); lastFocus?.focus?.() }
   if (open && focus) setTimeout(() => $('#agInput').focus(), 60)
 }
@@ -1351,7 +1640,7 @@ function bindUi() {
     else if (t.dataset.propose) propose(JSON.parse(t.dataset.propose), t.dataset.placement || 'other')
     else if (t.dataset.decide) decide(t.closest('.offer'), t.dataset.decide)
     else if (t.dataset.dot !== undefined) { app.promoIndex = Number(t.dataset.dot); renderPromo() }
-    else if (t.dataset.view) { e.preventDefault(); setView(t.dataset.view) }
+    else if (t.dataset.view) { e.preventDefault(); setView(t.dataset.view); if (t.dataset.view === 'agent') agentShow('chat') }
     else if (t.dataset.route) { e.preventDefault(); go(t.dataset.route) }
     else if (t.dataset.chat) openChat(t.dataset.chat)
     else if (t.id === 'todoMore') { app.showAllTodos = !app.showAllTodos; renderTodos() }
@@ -1390,10 +1679,10 @@ function bindUi() {
     b.setAttribute('aria-expanded', b.getAttribute('aria-expanded') === 'false' ? 'true' : 'false')
   })
   $('#agBannerX').addEventListener('click', () => { $('#agBanner').hidden = true; track('click', 'agent:banner-close') })
-  $('#agFeedback').addEventListener('click', () => { rated = false; $('#rate').hidden = false; track('click', 'agent:feedback') })
+  bindAgentExtras()
   $('#agPlus').addEventListener('click', () => $('#agInput').focus())
   $('#agMic').addEventListener('click', toggleMic)
-  $('#agentBtn').addEventListener('click', () => setView('agent'))
+  $('#agentBtn').addEventListener('click', () => { setView('agent'); agentShow('chat') })
   $('#askPlus').addEventListener('click', () => $('#askInput').focus())
   window.addEventListener('popstate', () => { const r = parseRoute(location.hash); if (r === 'agent') setView('agent', { push: false, focus: false }); else go(r, { push: false }) })
   document.querySelectorAll('.nav-tree__btn').forEach(btn => btn.addEventListener('click', () => {
@@ -1446,6 +1735,7 @@ function bindUi() {
   document.addEventListener('keydown', e => {
     if (e.key !== 'Escape') return
     if (document.querySelector('.pop:not([hidden])')) closePops()
+    else if (!$('#agModal').hidden) closeAgModal()
     else if (!$('#modal').hidden) closeModal()
     else if ($('#agentApp').classList.contains('side-open')) closeAgentSide()
     else if (view === 'agent') setView('home')
