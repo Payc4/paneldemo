@@ -3,7 +3,8 @@
 A redesigned hosting control-panel home page with a working AI assistant (Claude).
 Made-up customer accounts and prices; nothing is ever charged.
 
-- **Recommended for you** — "next best actions" worked out from the account (renewals, temporary domains, plan limits, freebies, credits).
+- **SALE! countdown, Refer & earn, promo carousel** — discount slides with was/now/save prices from the catalog.
+- **Your to-dos** — "next best actions" worked out from the account (renewals, temporary domains, plan limits, freebies, credits).
 - **Assistant** — Claude answers from the live account data and the price list, and offers products as cards with exact prices. Prices are always calculated by the server from `data/catalog.json`, never by the AI.
 - **Cards** — pressing Confirm changes the demo account and the page updates (e.g. claim a domain → the site loses its "temporary address" warning).
 - **Demo customers** — switch between Laura (growing store) and Tom (new customer) in the top bar; **Reset** restores the account.
@@ -26,8 +27,15 @@ No dependencies; Node 20+.
    - optional `ANTHROPIC_MODEL` — default `claude-sonnet-5-5` (e.g. `claude-haiku-5-5` for cheaper).
    - optional `DAILY_CHAT_LIMIT` — total assistant messages per day for all visitors (default 1000).
    - optional `ANTHROPIC_WORKSPACE_ID` — only if the key is not scoped to a workspace.
+   - `STATS_KEY` — a password for the statistics page (`/stats?key=...`). Without it, /stats is open to anyone.
 4. **Domain**: use Coolify's generated sslip.io address, or add an A record (e.g. `panel.yourdomain.com → server IP`) and enter `https://panel.yourdomain.com` in the Domains field.
 5. Deploy.
+
+## Statistics
+
+`/stats?key=STATS_KEY` shows visitors, page loads, assistant messages and, per placement (SALE! banner, each promo slide, each to-do, usage meters, the assistant…): views, clicks, click rate, offers shown, confirmed, declined and the demo "revenue" confirmed cards would have charged. Add `&reset=1` to start counting from zero.
+
+Numbers are saved to `/app/stats/stats.json`. To keep them across redeploys, add a **Persistent Storage** volume in Coolify mounted at `/app/stats`.
 
 ## Editing the demo
 

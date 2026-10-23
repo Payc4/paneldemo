@@ -3,6 +3,7 @@
 //   ANTHROPIC_API_KEY    Claude key; without it the agent runs in a simple demo mode
 //   ANTHROPIC_MODEL      default claude-sonnet-5-5
 //   DAILY_CHAT_LIMIT     total agent messages per day across all visitors (default 1000)
+//   STATS_KEY            password for /stats?key=... (if unset, /stats is open)
 
 import { createServer } from 'node:http'
 import { readFile, stat } from 'node:fs/promises'
@@ -11,6 +12,7 @@ import { extname, join, normalize } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { newAccount, personas, publicState, quote } from './lib/commerce.js'
 import { agentInfo, runTurn } from './lib/agent.js'
+import { record, reset as resetStats, statsHtml, validPlacement } from './lib/stats.js'
 
 const PORT = Number(process.env.PORT || 3000)
 const PUBLIC = fileURLToPath(new URL('./public/', import.meta.url))
@@ -82,7 +84,7 @@ const securityHeaders = {
   'x-content-type-options': 'nosniff',
   'referrer-policy': 'same-origin',
   'x-robots-tag': 'noindex, nofollow',
-  'content-security-policy': "default-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; frame-ancestors 'self'",
+  'content-security-policy': "default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; frame-ancestors 'self'",
 }
 
 let actionSeq = 0
@@ -94,6 +96,22 @@ async function handle(req, res) {
   const url = new URL(req.url, 'http://x')
 
   if (url.pathname === '/healthz') return send(res, 200, 'ok')
+
+  if (url.pathname === '/stats' && req.method === 'GET') {
+    const key = process.env.STATS_KEY || ''
+    if (key && url.searchParams.get('key') !== key) return send(res, 403, 'Add ?key=… (STATS_KEY) to view the statistics.')
+    if (url.searchParams.get('reset') === '1') resetStats()
+    res.writeHead(200, { 'content-type': MIME['.html'], 'cache-control': 'no-store', 'x-robots-tag': 'noindex' })
+    return res.end(statsHtml(key))
+  }
+
+  if (url.pathname === '/api/event' && req.method === 'POST') {
+    const body = await readJson(req)
+    if (!/^[0-9a-f-]{36}$/.test(String(body.session || ''))) return send(res, 400, { error: 'Bad session' })
+    const events = Array.isArray(body.events) ? body.events.slice(0, 40) : [body]
+    for (const e of events) record(body.session, String(e.type || ''), String(e.placement || ''))
+    return send(res, 204, '')
+  }
 
   if (url.pathname === '/api/state' && req.method === 'GET') {
     const s = getSession(url.searchParams.get('session'), url.searchParams.get('persona'))
@@ -116,7 +134,9 @@ async function handle(req, res) {
     const q = quote(s.account, body.action || {})
     if (q.error) return send(res, 422, { error: q.error })
     const id = newActionId()
-    s.pending.set(id, { params: body.action, at: Date.now() })
+    const placement = validPlacement(body.placement) ? body.placement : 'other'
+    s.pending.set(id, { params: body.action, placement, at: Date.now() })
+    record(body.session, 'propose', placement)
     return send(res, 200, { id, card: q.card })
   }
 
@@ -128,6 +148,7 @@ async function handle(req, res) {
     if (!pending) return send(res, 404, { error: 'This offer has expired. Ask again for a fresh one.' })
     s.pending.delete(body.id)
     if (body.decision !== 'confirm') {
+      record(body.session, 'decline', pending.placement || 'other')
       s.activity.push(`Declined: ${pending.params.sku}`)
       return send(res, 200, { ok: true, declined: true })
     }
@@ -135,6 +156,7 @@ async function handle(req, res) {
     const q = quote(s.account, pending.params)
     if (q.error) return send(res, 409, { error: q.error })
     const summary = q.apply(s.account)
+    record(body.session, 'confirm', pending.placement || 'other', { revenue: q.card.dueToday || 0 })
     s.activity.push(summary)
     return send(res, 200, { ok: true, summary, state: publicState(s.account, s.persona), activity: s.activity })
   }
@@ -148,11 +170,12 @@ async function handle(req, res) {
     if (text.length > MAX_MESSAGE) return send(res, 400, { error: `Please keep messages under ${MAX_MESSAGE} characters.` })
     const blocked = allowChat(clientIp(req))
     if (blocked) return send(res, 429, { error: blocked })
+    record(body.session, 'message', 'agent')
 
     res.writeHead(200, { 'content-type': 'text/event-stream; charset=utf-8', 'cache-control': 'no-cache, no-transform', 'x-accel-buffering': 'no', connection: 'keep-alive' })
     const emit = (event, data) => res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)
     try {
-      await runTurn(s, text, emit, newActionId)
+      await runTurn(s, text, emit, newActionId, (type, placement) => record(body.session, type, placement))
     } catch (e) {
       console.error('agent error', e.status || '', e.message)
       s.messages.pop() // drop the unanswered user message
