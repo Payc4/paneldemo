@@ -94,6 +94,7 @@ async function boot() {
   const d = await api(`/api/state?session=${app.session}${persona ? '&persona=' + encodeURIComponent(persona) : ''}`)
   apply(d)
   bindUi()
+  if (location.hash === '#agent') setView('agent', { push: false, focus: false })
   track('view', 'page')
   track('view', 'sale-banner')
   track('view', 'refer')
@@ -115,6 +116,7 @@ function apply(d) {
 function render() {
   const s = app.data
   $('#greeting').textContent = `Hi, ${s.customer.firstName}! How can I help you today?`
+  $('#agentWelcomeTitle').textContent = `Hi, ${s.customer.firstName}! I'm your Quayside Agent`
   $('#avatar').setAttribute('aria-label', `Account: ${s.customer.firstName}`)
   $('#avatar').title = s.customer.firstName
   const urgent = s.nba.filter(n => n.tone === 'urgent').length
@@ -345,7 +347,7 @@ function closeModal() { $('#modal').hidden = true; $('#modalBody').innerHTML = '
 
 // ───────────────────────── chat ─────────────────────────
 
-function scrollChat() { const c = $('#chat'); c.scrollTop = c.scrollHeight }
+function scrollChat() { window.scrollTo({ top: document.documentElement.scrollHeight }) }
 
 async function ask(text) {
   text = text.trim()
@@ -356,7 +358,8 @@ async function ask(text) {
   input.value = ''
   autosize()
 
-  $('#chatbox').hidden = false
+  setView('agent', { focus: false })
+  $('#main').classList.add('has-msgs')
   const chat = $('#chat')
   chat.insertAdjacentHTML('beforeend', `<div class="msg-user">${esc(text)}</div>`)
   const bot = document.createElement('div')
@@ -364,7 +367,6 @@ async function ask(text) {
   bot.innerHTML = '<div class="status"><span class="dots"><i></i><i></i><i></i></span><span>Thinking</span></div><div class="md"></div>'
   chat.appendChild(bot)
   scrollChat()
-  $('#chatbox').scrollIntoView({ behavior: 'smooth', block: 'nearest' })
 
   const md = bot.querySelector('.md')
   const status = bot.querySelector('.status')
@@ -460,10 +462,30 @@ function toggleMenu(open) {
   $('#scrim').hidden = !open
 }
 
-function focusAgent() {
+// ───────────────────────── views: Home / Agent ─────────────────────────
+
+let view = 'home'
+function setView(v, { focus = true, push = true } = {}) {
+  v = v === 'agent' ? 'agent' : 'home'
   toggleMenu(false)
-  window.scrollTo({ top: 0, behavior: 'smooth' })
-  setTimeout(() => $('#askInput').focus(), 250)
+  const changed = v !== view
+  view = v
+  $('#main').classList.toggle('view-agent', v === 'agent')
+  document.body.classList.toggle('is-agent', v === 'agent')
+  $('#navHome').classList.toggle('is-active', v === 'home')
+  $('#navAgent').classList.toggle('is-active', v === 'agent')
+  $('#agentBtn').classList.toggle('is-on', v === 'agent')
+  document.title = v === 'agent' ? 'Quayside — Agent (concept demo)' : 'Quayside — Home (concept demo)'
+  if (push && location.hash !== (v === 'agent' ? '#agent' : '')) history.pushState(null, '', v === 'agent' ? '#agent' : location.pathname + location.search)
+  if (changed) {
+    if (v === 'agent') { track('view', 'agent-page'); scrollChat() } else window.scrollTo({ top: 0 })
+  }
+  if (v === 'agent' && focus) setTimeout(() => $('#askInput').focus(), 50)
+}
+
+function clearChat() {
+  $('#chat').innerHTML = ''
+  $('#main').classList.remove('has-msgs')
 }
 
 function bindUi() {
@@ -471,16 +493,16 @@ function bindUi() {
     const tracked = e.target.closest('[data-track]')
     if (tracked) track('click', tracked.dataset.track)
 
-    const t = e.target.closest('[data-ask],[data-propose],[data-decide],[data-demo],[data-dot],[data-focus-agent],#todoMore,#promoDismiss')
+    const t = e.target.closest('[data-ask],[data-propose],[data-decide],[data-demo],[data-dot],[data-view],#todoMore,#promoDismiss')
     if (!t) return
     if (t.dataset.ask) { toggleMenu(false); ask(t.dataset.ask) }
     else if (t.dataset.propose) propose(JSON.parse(t.dataset.propose), t.dataset.placement || 'other')
     else if (t.dataset.decide) decide(t.closest('.offer'), t.dataset.decide)
     else if (t.dataset.dot !== undefined) { app.promoIndex = Number(t.dataset.dot); renderPromo() }
-    else if (t.hasAttribute('data-focus-agent')) focusAgent()
+    else if (t.dataset.view) { e.preventDefault(); setView(t.dataset.view) }
     else if (t.id === 'todoMore') { app.showAllTodos = !app.showAllTodos; renderTodos() }
     else if (t.id === 'promoDismiss') { app.promoHidden = true; renderPromo(); toast('Deals hidden for this visit') }
-    else if (t.hasAttribute('data-demo')) { toggleMenu(false); toast('Only the Home page is part of this concept demo.') }
+    else if (t.hasAttribute('data-demo')) { toggleMenu(false); toast('Only Home and Agent are part of this concept demo.') }
   })
 
   $('#askForm').addEventListener('submit', e => { e.preventDefault(); ask($('#askInput').value) })
@@ -500,11 +522,19 @@ function bindUi() {
     toast('Thanks for the feedback!')
   })
   $('#rateClose').addEventListener('click', () => { rated = true; $('#rate').hidden = true; track('click', 'feedback:close') })
-  $('#clearChat').addEventListener('click', () => { $('#chat').innerHTML = ''; $('#chatbox').hidden = true })
-  $('#agentBtn').addEventListener('click', focusAgent)
-  $('#bellBtn').addEventListener('click', () => $('#todos').scrollIntoView({ behavior: 'smooth', block: 'center' }))
+  $('#clearChat').addEventListener('click', () => { clearChat(); $('#askInput').focus() })
+  $('#agentBtn').addEventListener('click', () => setView('agent'))
+  $('#askPlus').addEventListener('click', () => $('#askInput').focus())
+  window.addEventListener('popstate', () => setView(location.hash === '#agent' ? 'agent' : 'home', { push: false, focus: false }))
+  document.querySelectorAll('.nav-tree__btn').forEach(btn => btn.addEventListener('click', () => {
+    const open = btn.getAttribute('aria-expanded') !== 'true'
+    document.querySelectorAll('.nav-tree__btn').forEach(o => o.setAttribute('aria-expanded', 'false'))
+    btn.setAttribute('aria-expanded', String(open))
+  }))
+  $('#bellBtn').addEventListener('click', () => { setView('home', { focus: false }); $('#todos').scrollIntoView({ behavior: 'smooth', block: 'center' }) })
   $('#referBtn').addEventListener('click', () => toast('Your referral link was copied — earn up to €200 per friend (demo)'))
   $('#saleBtn').addEventListener('click', () => {
+    setView('home', { focus: false })
     const w = $('#promoWrap')
     if (app.promoHidden) { app.promoHidden = false; renderPromo() }
     w.scrollIntoView({ behavior: 'smooth', block: 'center' })
@@ -517,7 +547,7 @@ function bindUi() {
 
   $('#personaSel').addEventListener('change', async e => {
     const d = await api('/api/reset', { persona: e.target.value })
-    $('#chat').innerHTML = ''; $('#chatbox').hidden = true
+    clearChat()
     app.showAllTodos = false
     app.promoIndex = 0
     apply(d)
@@ -525,7 +555,7 @@ function bindUi() {
   })
   $('#resetBtn').addEventListener('click', async () => {
     const d = await api('/api/reset', { persona: app.data.persona })
-    $('#chat').innerHTML = ''; $('#chatbox').hidden = true
+    clearChat()
     app.promoHidden = false
     apply(d)
     toast('Demo account reset')
