@@ -3,8 +3,10 @@
   "label": "Laura — growing online store",
   "customer": {
     "firstName": "Laura",
+    "lastName": "Bennett",
     "customerSinceMonths": 19,
-    "card": "Visa •• 4242"
+    "card": "Visa •• 4242",
+    "email": "laura@lunaclay-studio.com"
   },
   "plan": {
     "sku": "plan-premium",
@@ -41,7 +43,8 @@
         "CDN is off",
         "4 product images over 2 MB each",
         "Object cache is off"
-      ]
+      ],
+      "createdDaysAgo": 486
     },
     {
       "id": "site-2",
@@ -60,7 +63,8 @@
       "diagnostics": [
         "Live on a temporary address, so it can't be found on Google"
       ],
-      "suggestedDomain": "lunaclay-workshops.com"
+      "suggestedDomain": "lunaclay-workshops.com",
+      "createdDaysAgo": 112
     }
   ],
   "domains": [

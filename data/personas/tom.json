@@ -3,8 +3,10 @@
   "label": "Tom — new customer, day 2",
   "customer": {
     "firstName": "Tom",
+    "lastName": "Reed",
     "customerSinceMonths": 0,
-    "card": "Mastercard •• 8810"
+    "card": "Mastercard •• 8810",
+    "email": "tom.reed@example.com"
   },
   "plan": {
     "sku": "plan-premium",
@@ -39,7 +41,8 @@
         "Site is still a draft — visitors can't see it",
         "No domain connected yet"
       ],
-      "suggestedDomain": "tomreedphoto.com"
+      "suggestedDomain": "tomreedphoto.com",
+      "createdDaysAgo": 2
     }
   ],
   "domains": [],
