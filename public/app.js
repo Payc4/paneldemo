@@ -301,6 +301,7 @@ const PAGE_TITLES = {
   home: 'Home', websites: 'Websites', 'domains/search': 'Domain search', 'domains/transfer': 'Transfer domain',
   'domains/dns': 'DNS / Nameservers', 'domains/contacts': 'Contact profiles',
   emails: 'Emails', services: 'More services', 'marketing/email': 'Email marketing', 'marketing/ads': 'Google Ads', vps: 'VPS', ecommerce: 'Ecommerce', gpu: 'GPU', api: 'API', router: 'AI Router',
+  'apps/openclaw': 'OpenClaw', 'apps/hermes': 'Hermes Agent', 'apps/n8n': 'n8n', 'apps/paperclip': 'Paperclip',
 }
 const WEB_FILTERS = {
   wordpress: { label: 'WordPress', test: p => /wordpress/i.test(p) },
@@ -308,7 +309,7 @@ const WEB_FILTERS = {
   apps: { label: 'Web Apps', test: p => /node|app|react|next|python/i.test(p) },
   php: { label: 'PHP/HTML', test: p => /php|html|static/i.test(p) },
 }
-const ROUTES = new Set(['home', 'websites', ...Object.keys(WEB_FILTERS).map(k => 'websites/' + k), 'domains/search', 'domains/transfer', 'domains/dns', 'domains/contacts', 'emails', 'services', 'marketing/email', 'marketing/ads', 'vps', 'ecommerce', 'gpu', 'api', 'router'])
+const ROUTES = new Set(['home', 'websites', ...Object.keys(WEB_FILTERS).map(k => 'websites/' + k), 'domains/search', 'domains/transfer', 'domains/dns', 'domains/contacts', 'emails', 'services', 'marketing/email', 'marketing/ads', 'vps', 'ecommerce', 'gpu', 'api', 'router', 'apps/openclaw', 'apps/hermes', 'apps/n8n', 'apps/paperclip'])
 
 app.page = 'home'
 app.web = { q: '', layout: 'grid', collapsed: false, starred: new Set() }
@@ -400,6 +401,7 @@ function renderPage() {
     : section === 'gpu' ? pageGpu()
     : section === 'api' ? pageApi()
     : section === 'router' ? pageRouter()
+    : section === 'apps' ? pageAiApps(sub)
     : sub === 'search' ? pageDomainSearch()
     : sub === 'transfer' ? pageTransfer()
     : sub === 'dns' ? pageDns()
@@ -756,7 +758,7 @@ const SERVICES = [
   { cat: 'Email & marketing', title: 'Quayside Reach', ai: true, badge: 'Save up to 67%', text: 'Create inbox-ready newsletters with an AI-powered email marketing tool.', art: 'reach', route: 'marketing/email' },
   { cat: 'Hosting & VPS', title: 'VPS hosting', badge: 'Save up to 70%', text: 'Full power, flexibility and speed with your own virtual private server.', art: 'vps', route: 'vps' },
   { cat: 'Domains', title: 'Domain names', badge: 'Up to 99% off', text: 'Find the perfect name for your brand, with free WHOIS privacy.', art: 'domain', route: 'domains/search' },
-  { cat: 'AI & automation', title: 'Self-hosted n8n', badge: 'Save up to 70%', text: 'No-code AI workflows with unlimited runs on your own server.', art: 'n8n', route: 'vps' },
+  { cat: 'AI & automation', title: 'Self-hosted n8n', badge: 'Save up to 70%', text: 'No-code AI workflows with unlimited runs on your own server.', art: 'n8n', route: 'apps/n8n' },
   { cat: 'Email & marketing', title: 'Google Ads', text: 'Show up on Search, YouTube and Gmail and bring more people to your business.', art: 'ads', route: 'marketing/ads' },
   { cat: 'AI & automation', title: 'AI agents', ai: true, text: 'A team of AI agents for sales, marketing and SEO that works around the clock.', art: 'agents', view: 'agent' },
   { cat: 'Other', title: 'SSL certificates', text: 'Keep visitors safe and show the padlock in every browser.', art: 'ssl' },
@@ -1512,6 +1514,155 @@ AG_PAGES.jobs = () => {
   </div>`
 }
 
+// ── AI automation apps (OpenClaw, Hermes Agent, n8n, Paperclip) ──
+
+const AI_APPS = {
+  openclaw: { name: 'OpenClaw', kind: 'AI agent', color: '#E5383B', bg: '#FDECEC', icon: '<path d="M7 4c-1 3 0 5 2 6M17 4c1 3 0 5-2 6M6 12a6 6 0 0 0 12 0c0-1.5-1-2-2-2H8c-1 0-2 .5-2 2z"/><path d="M10 14h.01M14 14h.01"/>',
+    text: 'Chat with an AI assistant that answers questions, searches the web, and handles tasks.',
+    points: ['Handles quick tasks on the go', 'Works across chat and email channels', ['Works with ChatGPT subscription', 'Sign in with your ChatGPT Plus or Pro account instead of paying for an API key.']] },
+  hermes: { name: 'Hermes Agent', kind: 'AI agent', color: '#1D1E20', bg: '#EFEFF2', icon: '<path d="M8 20v-6a4 4 0 0 1 8 0v6M6 20h12M9 10V7a3 3 0 0 1 6 0v3M5 9l3 1M19 9l-3 1"/>',
+    text: 'An AI assistant that automates repetitive tasks and gets better as you use it.',
+    points: ['Builds memory and improves over time', 'Handles more advanced, multi-step tasks', ['Works with ChatGPT subscription', 'Sign in with your ChatGPT Plus or Pro account instead of paying for an API key.']] },
+  n8n: { name: 'n8n', kind: 'Workflow automation', color: '#E8476A', bg: '#FDEEF2', icon: '<circle cx="5" cy="12" r="2.5"/><circle cx="12" cy="12" r="2.5"/><circle cx="19" cy="6" r="2.5"/><circle cx="19" cy="18" r="2.5"/><path d="M7.5 12h2M14.5 12l2.5-4.5M14.5 12l2.5 4.5"/>',
+    text: 'Connect your apps and automate workflows without writing code.',
+    points: ['Build workflows with a visual editor', 'Connect hundreds of apps and services', 'Run workflows on autopilot, 24/7'] },
+  paperclip: { name: 'Paperclip', kind: 'AI agent dashboard', color: '#36344D', bg: '#F1F0F5', icon: '<path d="m21 11-8.5 8.5a5 5 0 0 1-7-7L14 4a3.5 3.5 0 0 1 5 5l-8.5 8.5a2 2 0 0 1-3-3L15 7"/>',
+    text: 'A dashboard for organizing and running teams of AI agents in one place.',
+    points: ['Run teams of AI coding agents', 'Give agents roles, goals, and budgets', ['Works with ChatGPT subscription', 'Sign in with your ChatGPT Plus or Pro account instead of paying for an API key.']] },
+}
+const appIcon = (k, size = 20) => `<span class="aa-icon" style="--c:${AI_APPS[k].color};--bg:${AI_APPS[k].bg}">${I(AI_APPS[k].icon, size, 1.9)}</span>`
+const appDots = keys => `<span class="aa-dots">${keys.map(k => `<span class="aa-dot" title="${AI_APPS[k].name}" style="--c:${AI_APPS[k].color}">${I(AI_APPS[k].icon, 12, 2.2)}</span>`).join('')}</span>`
+const help = tip => `<button class="aa-help" type="button" aria-label="${esc(tip)}" data-tip="${esc(tip)}">${I('<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.5V14M12 17h.01"/>', 14, 1.8)}</button>`
+
+const USE_CASES = [
+  { title: 'Ecommerce & site monitoring', text: 'Your agent autonomously monitors uptime, tracks competitor pricing, and alerts you on Slack or Telegram before issues hit revenue.',
+    prompt: 'Check my store and top 3 competitors every morning at 8 AM. Alert me on Telegram if any prices change, stock runs out, or page load exceeds 2s.', apps: ['openclaw', 'hermes'], scene: 'beach' },
+  { title: 'Industry research & content pipeline', text: 'Your agent aggregates market insights, generates draft briefs, and files them while you sleep.',
+    prompt: 'Scrape Reddit and top industry blogs daily for trending AI topics. Summarize key takeaways and draft a LinkedIn post in my voice.', apps: ['openclaw', 'hermes', 'paperclip'], scene: 'night' },
+  { title: 'Lead enrichment & CRM sync', text: 'Your agent enriches incoming leads, cross-checks company data via APIs, and posts instant alerts to Slack or Telegram.',
+    prompt: 'When a new lead submits a form, look up their company info, score their tech stack, and route qualified leads straight to my sales channel.', apps: ['openclaw', 'hermes', 'n8n', 'paperclip'], scene: 'city' },
+  { title: 'Inbox triage & replies', text: 'Your agent sorts incoming email, drafts replies in your tone, and flags only what needs you.',
+    prompt: 'Every hour, sort my inbox. Draft replies to order questions, archive newsletters, and ping me on WhatsApp for anything urgent.', apps: ['openclaw', 'hermes'], scene: 'cafe' },
+  { title: 'Order & stock automation', text: 'Your workflow syncs orders, updates stock levels across channels, and reorders before you run out.',
+    prompt: 'When stock for any product drops below 10, email my supplier a reorder and update the stock count in my store and spreadsheet.', apps: ['n8n', 'paperclip'], scene: 'studio' },
+]
+const SCENES = {
+  beach: ['#8EC8F2', '#F4E6C8', '<circle cx="250" cy="50" r="26" fill="#FFF6D8"/><path d="M0 170c60-14 120-14 180-4s100 8 140-4v78H0z" fill="#3E9BC9"/><path d="M0 200c80-10 200-10 320 4v36H0z" fill="#EAD7AE"/>'],
+  night: ['#1C2440', '#0E1222', '<rect x="210" y="40" width="70" height="90" rx="4" fill="#24304F"/><path d="M220 54h50M220 70h36" stroke="#5B7CF7" stroke-width="4" stroke-linecap="round" opacity=".7"/><path d="M0 190c40-24 120-30 200-10s100 20 120 18v42H0z" fill="#2A3352"/>'],
+  city: ['#7FB8E8', '#D5E9F8', '<path d="M0 240V140h30v-40h26v60h24v-80h30v100h20v-50h26v70h30v-90h34v110h20v-60h28v80z" fill="#B7D3EC"/>'],
+  cafe: ['#E9D6C0', '#C9A788', '<rect x="20" y="40" width="90" height="70" rx="6" fill="#F5E9DA"/><circle cx="250" cy="70" r="30" fill="#F5E9DA" opacity=".6"/><path d="M0 200h320v40H0z" fill="#8C6A4E"/>'],
+  studio: ['#E6E0FF', '#C9BBFF', '<rect x="30" y="60" width="80" height="60" rx="6" fill="#fff" opacity=".7"/><rect x="200" y="40" width="90" height="110" rx="6" fill="#fff" opacity=".55"/><path d="M0 200h320v40H0z" fill="#B3A3F0"/>'],
+}
+function sceneArt(k, i) {
+  const [a, b, extra] = SCENES[k]
+  return `<svg viewBox="0 0 320 240" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs><linearGradient id="sc${i}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs>
+    <rect width="320" height="240" fill="url(#sc${i})"/>${extra}
+    <g transform="translate(118 62)"><circle cx="42" cy="30" r="22" fill="#E8B48E"/><path d="M18 28c2-20 44-24 48 0-12-8-34-8-48 0z" fill="${k === 'night' ? '#3A2A20' : '#7A5134'}"/><path d="M0 178c2-60 24-104 42-104s40 44 42 104z" fill="${k === 'night' ? '#2E3A5C' : k === 'city' ? '#E9C64A' : '#F7F5F0'}"/>
+    <rect x="58" y="96" width="22" height="38" rx="5" fill="#1D1E20" transform="rotate(-14 69 115)"/></g></svg>`
+}
+
+app.aa = { app: 'openclaw', term: 24, slide: 0, faq: 0 }
+const AA_TERMS = [[24, '€18,99', '76% OFF', '€4,49'], [12, '€18,99', '63% OFF', '€6,99'], [1, '€18,99', '53% OFF', '€8,99']]
+const AA_FAQ = [
+  ['Do I need any technical knowledge to set up an AI Automation App?', 'Not at all. AI Automation Apps are designed for people who have never touched a server in their life. Our 1-click deployment handles the entire installation — from the server environment to the application configuration. Just pick your plan, choose an application, and it\'s live within minutes. No coding, no command lines, no complicated dashboards.'],
+  ['How do AI credits work, and do I need to set up external accounts?', 'Every plan includes AI credits, so your app works straight away without any other accounts. When you run low you can top up through AI Router, sign in with your ChatGPT subscription, or connect your own API key from OpenAI, Anthropic, xAI or Gemini.'],
+  ['Is my data private and secure?', 'Yes. Each app runs on its own private server that only you can access. We keep the system patched and backed up for you, and your conversations and workflow data are never used to train AI models.'],
+  ["What's the difference between AI Automation Apps and running applications on a VPS?", 'With a VPS you get a full server and manage everything yourself — installing, updating and securing the app. AI Automation Apps are fully managed: we install, update and monitor the app for you, and you can switch to a different app at any time.'],
+  ['What can I do with an AI Automation App?', 'Monitor your store and competitors, draft content, enrich and route leads, sort your inbox, sync orders and stock, and much more. Set a task once and your agent keeps working on a schedule or whenever something happens in your apps.'],
+]
+
+function pageAiApps(key) {
+  if (AI_APPS[key] && app.aa.from !== key) { app.aa.app = key; app.aa.from = key }
+  const a = app.aa
+  const check = I(ICON2.tick, 15, 2.4)
+  const card = k => { const x = AI_APPS[k]; return `<article class="aa-card">
+    <div class="aa-card__head">${appIcon(k)}<div><h2>${x.name}</h2><small>${x.kind}</small></div></div>
+    <p>${x.text}</p>
+    <ul class="aa-checks">${x.points.map(pt => Array.isArray(pt) ? `<li>${check}${pt[0]} ${help(pt[1])}</li>` : `<li>${check}${pt}</li>`).join('')}</ul>
+    <button class="aa-btn" data-aa-start="${k}">Get started</button>
+  </article>` }
+  const feature = (t, tip) => `<li>${check}<span>${t}</span>${tip ? help(tip) : ''}</li>`
+  return `<div class="pg pg--mid aa">
+    <header class="aa-hero"><h1>Run an AI agent or automation tool.<br>No server setup needed</h1>
+      <p>Pick one below and we install and run it — ready in about a minute, nothing to configure. You can reinstall with a different app later.</p></header>
+    <div class="aa-grid">${Object.keys(AI_APPS).map(card).join('')}</div>
+
+    <section class="aa-uses">
+      <div class="aa-uses__head"><div><h2 class="aa-h2">Your agent works. You don't have to.</h2><p>Set a task once. Your agent keeps going, on the beach, on a hike, or while you sleep.</p></div>
+        <div class="aa-arrows"><button class="round-btn" data-aa-slide="-1" aria-label="Previous" ${a.slide <= 0 ? 'disabled' : ''}>${I('<path d="m15 6-6 6 6 6"/>', 16, 2)}</button><button class="round-btn" data-aa-slide="1" aria-label="Next" ${a.slide >= USE_CASES.length - 3 ? 'disabled' : ''}>${I('<path d="m9 6 6 6-6 6"/>', 16, 2)}</button></div></div>
+      <div class="aa-track"><div class="aa-rail" style="--i:${a.slide}">${USE_CASES.map((u, i) => `<article class="aa-use">
+        <div class="aa-use__img">${sceneArt(u.scene, i)}<div class="aa-prompt"><span>${esc(u.prompt)}</span><i>${I('<path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/>', 13, 2)}</i></div></div>
+        <h3>${esc(u.title)}</h3><p>${esc(u.text)}</p>
+        <div class="aa-rec">Recommended apps ${appDots(u.apps)}</div>
+      </article>`).join('')}</div></div>
+    </section>
+
+    <section class="aa-plan" id="aaPlan">
+      <h2 class="aa-h2 aa-center">One plan for any application. Change anytime</h2>
+      <p class="aa-sub">Pick the application you want to install first. You can change it later from the dashboard.</p>
+      <div class="aa-plan__grid">
+        <div>
+          <b class="aa-label">Select application</b>
+          <div class="aa-pick" role="radiogroup" aria-label="Application">${Object.keys(AI_APPS).map(k => `<button role="radio" aria-checked="${a.app === k}" class="aa-pick__item ${a.app === k ? 'is-on' : ''}" data-aa-app="${k}">${appIcon(k, 16)}${AI_APPS[k].name}</button>`).join('')}</div>
+          <div class="ecom__opts aa-terms" role="radiogroup" aria-label="Billing period">
+            <div class="ecom__popular">Recommended</div>
+            ${AA_TERMS.map(([t, was, off, now], i) => `<button role="radio" aria-checked="${a.term === t}" class="ecom__opt aa-term ${i ? 'ecom__opt--plain' : ''} ${a.term === t ? 'is-on' : ''}" data-aa-term="${t}">
+              <span class="radio"></span><b>${t} ${t === 1 ? 'month' : 'months'}</b>
+              <span class="ecom__price"><span class="ecom__was"><s>${was}</s><em class="aa-off">${off}</em></span><span><strong>${now}</strong> /mo</span></span></button>`).join('')}
+          </div>
+          <button class="ecom__choose">Choose plan</button>
+          <p class="ecom__fine">Renew at €10,99/mo. Prices exclude applicable taxes.</p>
+        </div>
+        <div class="aa-incl">
+          <h3>Setup &amp; management</h3>
+          <ul>${feature('Ready out of the box', `${AI_APPS[a.app].name} is installed and configured for you in about a minute.`)}${feature('No maintenance needed')}${feature('Security managed for you', 'We keep the server patched, firewalled and backed up.')}${feature('Switch applications anytime', 'Reinstall with a different app from your dashboard whenever you like.')}</ul>
+          <h3>Interface &amp; access</h3>
+          <ul>${feature('Visual interface included')}${feature('CLI access included', 'Prefer the terminal? Connect over SSH any time.')}</ul>
+          <h3>AI capabilities</h3>
+          <ul>${feature('AI credits included')}${feature('Web search included', 'Your agent can search the web for up-to-date answers.')}${feature('Works with ChatGPT subscription', 'Sign in with your ChatGPT Plus or Pro account instead of paying for an API key.')}${feature('Works with Quayside Connector', 'Lets your agent manage your Quayside websites, domains and email.')}</ul>
+          <div class="aa-guar"><span>${I(ICON2.shield, 15, 1.8)}30-day money-back guarantee</span><i></i><span>${I('<path d="M4 14v-2a8 8 0 0 1 16 0v2M4 14a2 2 0 0 1 2-2h1v6H6a2 2 0 0 1-2-2zM20 14a2 2 0 0 0-2-2h-1v6h1a2 2 0 0 0 2-2z"/>', 15, 1.8)}24/7 support</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="aa-power">
+      <h2 class="aa-h2 aa-center">Power your agent your way</h2>
+      <p class="aa-sub">Choose how your agent connects to AI. Use the ChatGPT subscription you already have, top up Quayside AI credits, or bring your own key.</p>
+      <div class="aa-power__grid">
+        <article class="aa-pow"><div class="aa-pow__top"><span class="gpu-feat__icon">${I('<circle cx="5" cy="12" r="2"/><path d="M7 12h4l4-5h4M11 12l4 5h4M17 5l2 2-2 2M17 15l2 2-2 2"/>', 18, 1.8)}</span><em class="tag-violet">Recommended</em></div>
+          <h3>AI Router</h3><p>Top up AI credits and choose from a variety of AI models. No separate accounts or providers.</p><div class="aa-rec">Works with ${appDots(['openclaw', 'hermes', 'n8n'])}</div></article>
+        <article class="aa-pow"><div class="aa-pow__top"><span class="gpu-feat__icon">${I('<circle cx="12" cy="12" r="9"/><path d="M8 12a4 4 0 0 1 8 0"/>', 18, 1.8)}</span><em class="tag-green">Most affordable</em></div>
+          <h3>Use your ChatGPT subscription</h3><p>Power your app with your ChatGPT Plus or Pro subscription instead of an OpenAI API key.</p><div class="aa-rec">Works with ${appDots(['openclaw', 'hermes', 'paperclip'])}</div></article>
+        <article class="aa-pow"><div class="aa-pow__top"><span class="gpu-feat__icon">${I('<circle cx="8" cy="15" r="4"/><path d="m11 12 9-9M17 6l3 3M15 8l2 2"/>', 18, 1.8)}</span></div>
+          <h3>Bring your own API key</h3><p>Already have a key from OpenAI, Anthropic, xAI, or Gemini? Connect it and use your existing plan.</p><div class="aa-rec">Works with ${appDots(['openclaw', 'hermes', 'paperclip'])}</div></article>
+      </div>
+      <button class="aa-go" data-aa-start="${a.app}">Get started</button>
+    </section>
+
+    <section class="pg-card aa-faq">
+      <h2 class="aa-h2 aa-center">AI Automation Apps FAQs</h2>
+      <p class="aa-sub">Find answers to frequently asked questions about AI Automation Apps.</p>
+      ${AA_FAQ.map(([q, ans], i) => `<div class="aa-q ${a.faq === i ? 'is-open' : ''}"><button class="aa-q__btn" data-aa-faq="${i}" aria-expanded="${a.faq === i}">${esc(q)}${I(a.faq === i ? '<path d="m6 15 6-6 6 6"/>' : '<path d="m6 9 6 6 6-6"/>', 16, 2)}</button>${a.faq === i ? `<p>${esc(ans)}</p>` : ''}</div>`).join('')}
+    </section>
+  </div>`
+}
+
+function bindAiApps() {
+  $('#page').addEventListener('click', e => {
+    const t = e.target.closest('[data-aa-start],[data-aa-app],[data-aa-term],[data-aa-slide],[data-aa-faq]')
+    if (!t) return
+    const d = t.dataset
+    const keep = window.scrollY
+    if (d.aaStart) { app.aa.app = d.aaStart; renderPage(); window.scrollTo({ top: keep }); return $('#aaPlan').scrollIntoView({ behavior: 'smooth', block: 'start' }) }
+    if (d.aaApp) app.aa.app = d.aaApp
+    else if (d.aaTerm) app.aa.term = Number(d.aaTerm)
+    else if (d.aaSlide) app.aa.slide = Math.max(0, Math.min(USE_CASES.length - 3, app.aa.slide + Number(d.aaSlide)))
+    else if (d.aaFaq) app.aa.faq = app.aa.faq === Number(d.aaFaq) ? -1 : Number(d.aaFaq)
+    renderPage()
+    window.scrollTo({ top: keep })
+  })
+}
+
 // ───────────────────────── offer cards ─────────────────────────
 
 function offerHtml(card, id) {
@@ -1898,6 +2049,7 @@ function bindUi() {
   $('#agBannerX').addEventListener('click', () => { $('#agBanner').hidden = true; track('click', 'agent:banner-close') })
   bindAgentExtras()
   bindPages4()
+  bindAiApps()
   $('#agPlus').addEventListener('click', () => $('#agInput').focus())
   $('#agMic').addEventListener('click', toggleMic)
   $('#agentBtn').addEventListener('click', () => { setView('agent'); agentShow('chat') })
