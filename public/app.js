@@ -37,8 +37,18 @@ const app = { session: null, data: null, agent: null, activity: [], busy: false,
 
 const seen = new Set()
 let queue = []
+const PREVIEW = new URLSearchParams(location.search).has('preview') // live-editor preview: don't count stats
+// ?live=1: reload by itself whenever this version is edited (live editor or the claude.ai connector)
+if (new URLSearchParams(location.search).has('live') && window.EventSource) {
+  const slug = (location.pathname.match(/^\/(hpanel\d{1,3})\//) || [])[1]
+  if (slug) {
+    let t
+    const es = new EventSource('/api/changes?v=' + slug)
+    es.addEventListener('change', () => { clearTimeout(t); t = setTimeout(() => location.reload(), 600) })
+  }
+}
 function track(type, placement) {
-  if (!placement) return
+  if (!placement || PREVIEW) return
   if (type === 'view') {
     if (seen.has(placement)) return
     seen.add(placement)
