@@ -35,7 +35,7 @@ async function boot() {
   document.title = `Live editor — ${slug}`
   const s = await api('state?v=' + slug).catch(e => ({ error: e.message, status: e.status }))
   if (s.error) { showGate(s.status === 404 ? `${slug} doesn't exist.` : s.error, true); return }
-  if (!s.enabled) { showGate('The editor is switched off. Add EDITOR_PASSWORD in Coolify (as a runtime variable) and redeploy to turn it on.', true); return }
+  if (!s.enabled) { showGate('The editor is switched off. Add SITE_PASSWORD in Coolify (as a runtime variable) and redeploy to turn it on.', true); return }
   if (!s.authed) { showGate(null, false); return }
   showEditor(s)
 }

@@ -49,7 +49,7 @@ No dependencies; Node 20+.
    - optional `DAILY_CHAT_LIMIT` — total assistant messages per day for all visitors (default 1000).
    - optional `ANTHROPIC_WORKSPACE_ID` — only if the key is not scoped to a workspace.
    - `STATS_KEY` — a password for the statistics page (`/stats?key=...`). Without it, /stats is open to anyone.
-   - `EDITOR_PASSWORD` — password for the live editor (`/hpanel1/edit`). The editor is off when this isn't set.
+   - optional `EDITOR_PASSWORD` — a separate password for the live editor (`/hpanel1/edit`). When it isn't set, the editor uses `SITE_PASSWORD`: anyone signed in to the site can edit. The editor is off when neither is set.
    - optional `EDITOR_MODEL` — model for the editor (default: `ANTHROPIC_MODEL`, else `claude-sonnet-5-5`).
    - optional `EDITOR_DAILY_LIMIT` — editor requests per day (default 300).
    - optional `SITE_PASSWORD` — puts the whole site behind a password page (remembered for 30 days per browser). The site is open when this isn't set. The claude.ai connector keeps using its own token.
