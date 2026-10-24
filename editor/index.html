@@ -43,6 +43,7 @@
       <div class="seg" role="group" aria-label="Preview size">
         <button class="is-on" data-size="desktop">Desktop</button><button data-size="phone">Phone</button>
       </div>
+      <button class="tbtn" id="claudeBtn" aria-controls="claudeBox">Use in claude.ai</button>
       <a class="tbtn" id="openBtn" target="_blank" rel="noopener">Open page<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></a>
       <button class="btn btn-primary btn-sm" id="saveAsBtn">Save as new version</button>
       <button class="tbtn tbtn--icon" id="logoutBtn" aria-label="Log out" title="Log out"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h5M15 8l4 4-4 4M19 12H9"/></svg></button>
@@ -68,6 +69,17 @@
       </section>
     </div>
   </div>
+  <aside class="cbox" id="claudeBox" hidden aria-label="Use in claude.ai">
+    <div class="cbox__head"><b>Edit from claude.ai (uses your Claude plan)</b><button class="tbtn tbtn--icon" id="claudeClose" aria-label="Close">✕</button></div>
+    <p id="mcpOff">The connector is switched off. Add a long random <code>MCP_TOKEN</code> in Coolify (runtime variable) and redeploy to turn it on.</p>
+    <ol id="mcpSteps">
+      <li>In claude.ai open <b>Settings → Connectors → Add custom connector</b>.</li>
+      <li>Name: <b>Quayside editor</b>. URL: <code id="mcpUrl"></code> <button class="link" id="copyMcp">Copy</button></li>
+      <li>Under authentication add a request header <code>Authorization</code> with the value <code>Bearer</code> + your MCP_TOKEN. If your Claude app has no header field, use the URL <code>…/mcp/&lt;your MCP_TOKEN&gt;</code> with “No sign in” instead.</li>
+      <li>Open the live preview next to Claude: <a id="liveUrl" target="_blank" rel="noopener"></a> — it reloads by itself after every change.</li>
+      <li>In a chat, turn the connector on and ask, e.g. “On hpanel1, add a first deals slide about connecting AI tools.”</li>
+    </ol>
+  </aside>
   <div class="toast" id="toast" role="status" hidden></div>
 </body>
 </html>

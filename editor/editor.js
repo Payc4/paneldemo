@@ -14,6 +14,7 @@ const SUGGESTIONS = [
 let busy = false
 let log = []
 let reloadTimer = null
+let connector = false
 
 async function api(path, body) {
   const res = await fetch('/api/editor/' + path, body === undefined ? undefined : { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ version: slug, ...body }) })
@@ -63,7 +64,8 @@ function showEditor(s) {
   $('#openBtn').href = `/${slug}/`
   $('#aiInfo').textContent = s.ai.live ? `Edits ${slug} · ${s.ai.model}` : 'AI key missing — set ANTHROPIC_API_KEY'
   setHistory(s.history)
-  $('#frame').src = `/${slug}/?preview=1`
+  $('#frame').src = `/${slug}/?preview=1&live=1`
+  connector = s.connector
   try { log = JSON.parse(localStorage.getItem(LOG_KEY) || '[]') } catch { log = [] }
   renderLog()
   if (s.busy) note('A change is still being made from another window.')
@@ -93,10 +95,16 @@ $('#log').addEventListener('click', e => {
 
 // ───────────── preview ─────────────
 
+// The preview reloads itself through the live-change stream. This is only a backup: if it hasn't
+// reloaded within a few seconds of a change (e.g. a proxy blocked the stream), reload it once.
+let lastFrameLoad = 0
+$('#frame').addEventListener('load', () => { lastFrameLoad = Date.now() })
 function reloadPreview(delay = 0) {
+  const since = Date.now()
   clearTimeout(reloadTimer)
   reloadTimer = setTimeout(() => {
-    try { $('#frame').contentWindow.location.reload() } catch { $('#frame').src = `/${slug}/?preview=1` }
+    if (lastFrameLoad >= since) return
+    try { $('#frame').contentWindow.location.reload() } catch { $('#frame').src = `/${slug}/?preview=1&live=1` }
   }, delay)
 }
 
@@ -153,9 +161,8 @@ async function send(text) {
         const data = JSON.parse(line)
         if (ev === 'delta') { raw += data.text; txt.textContent = raw.trim() }
         else if (ev === 'status') status.lastElementChild.textContent = data.text
-        else if (ev === 'changed') reloadPreview(500)
         else if (ev === 'history') setHistory(data)
-        else if (ev === 'done') { summary = data.summary; if (data.changed) reloadPreview(0) }
+        else if (ev === 'done') { summary = data.summary; if (data.changed) reloadPreview(3000) }
         else if (ev === 'error') failed = data.message
         el.scrollTop = el.scrollHeight
       }
@@ -200,7 +207,7 @@ for (const [btn, action, word] of [['#undoBtn', 'undo', 'Undid'], ['#redoBtn', '
     try {
       const d = await api(action, {})
       setHistory(d.history)
-      if (d.ok) { note(`${word}: ${d.label}`); reloadPreview(0) }
+      if (d.ok) { note(`${word}: ${d.label}`); reloadPreview(3000) }
     } catch (e) { toast(e.message) }
   })
 }
@@ -222,6 +229,21 @@ $('#newChatBtn').addEventListener('click', async () => {
   await api('new-chat', {}).catch(() => {})
   log = []; saveLog(); renderLog(); $('#msg').focus()
 })
+
+// ───────────── claude.ai connector info ─────────────
+
+$('#claudeBtn').addEventListener('click', () => {
+  const box = $('#claudeBox')
+  box.hidden = !box.hidden
+  if (box.hidden) return
+  $('#mcpUrl').textContent = `${location.origin}/mcp`
+  $('#mcpOff').hidden = connector
+  $('#mcpSteps').hidden = !connector
+  $('#liveUrl').textContent = `${location.origin}/${slug}/?live=1`
+  $('#liveUrl').href = `/${slug}/?live=1`
+})
+$('#claudeClose').addEventListener('click', () => { $('#claudeBox').hidden = true })
+$('#copyMcp').addEventListener('click', () => { navigator.clipboard?.writeText(`${location.origin}/mcp`).then(() => toast('Copied')).catch(() => {}) })
 
 $('#logoutBtn').addEventListener('click', async () => {
   await api('logout', {}).catch(() => {})

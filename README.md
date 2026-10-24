@@ -19,6 +19,17 @@ Each version of the prototype has its own page: **/hpanel1/**, **/hpanel2/**, �
 - `public/` is the template. On first start it becomes hpanel1. Versions that have never been edited are refreshed automatically when the template changes on a redeploy; edited versions are left exactly as they are.
 - The editor preview doesn't count towards /stats.
 
+### Editing from claude.ai (uses the client's own Claude plan)
+
+The same editing tools are also available as a **claude.ai connector** (remote MCP server at `/mcp`), so changes can be made from a normal Claude chat on the client's Pro/Max plan instead of the API key.
+
+1. In Coolify add `MCP_TOKEN` (a long random secret, runtime variable) and make sure the site has an `https://` address.
+2. In claude.ai: **Settings → Connectors → Add custom connector**. URL: `https://<your address>/mcp`. Authentication: request header `Authorization: Bearer <MCP_TOKEN>`. If the app has no header field, use `https://<your address>/mcp/<MCP_TOKEN>` with "No sign in".
+3. Open the live preview `https://<your address>/hpanel1/?live=1` next to Claude. It reloads by itself after every change.
+4. In a chat, turn the connector on and ask, e.g. "On hpanel1, add a first deals slide about connecting AI tools."
+
+Tools: list_versions, get_outline, search, view, replace, insert, undo, redo, save_as_new_version. Edits made within 3 minutes of each other are one undo step. The editor page's **Use in claude.ai** button shows these steps with the right address.
+
 ## Run locally
 
 ```bash
@@ -41,6 +52,7 @@ No dependencies; Node 20+.
    - `EDITOR_PASSWORD` — password for the live editor (`/hpanel1/edit`). The editor is off when this isn't set.
    - optional `EDITOR_MODEL` — model for the editor (default: `ANTHROPIC_MODEL`, else `claude-sonnet-5-5`).
    - optional `EDITOR_DAILY_LIMIT` — editor requests per day (default 300).
+   - `MCP_TOKEN` — secret for the claude.ai connector at `/mcp`. The connector is off when this isn't set.
 4. **Domain**: use Coolify's generated sslip.io address, or add an A record (e.g. `panel.yourdomain.com → server IP`) and enter `https://panel.yourdomain.com` in the Domains field.
 5. Deploy.
 

@@ -7,6 +7,7 @@
 //   EDITOR_PASSWORD      password for the live editor at /hpanelN/edit (editor is off when unset)
 //   EDITOR_MODEL         model for the live editor (default: ANTHROPIC_MODEL, else claude-sonnet-5-5)
 //   EDITOR_DAILY_LIMIT   editor requests per day (default 300)
+//   MCP_TOKEN            secret for the claude.ai connector at /mcp (connector is off when unset)
 //   VERSIONS_DIR         where prototype versions are stored (default ./versions — keep it on a persistent volume)
 
 import { createServer } from 'node:http'
@@ -19,6 +20,7 @@ import { agentInfo, runTurn } from './lib/agent.js'
 import { record, reset as resetStats, statsHtml, validPlacement } from './lib/stats.js'
 import * as versions from './lib/versions.js'
 import { runEdit, resetConversation, editorInfo } from './lib/editor.js'
+import { handleMcp, mcpEnabled } from './lib/mcp.js'
 
 const PORT = Number(process.env.PORT || 3000)
 const PUBLIC = fileURLToPath(new URL('./public/', import.meta.url))
@@ -89,12 +91,12 @@ function send(res, status, body, headers = {}) {
   res.end(data)
 }
 
-async function readJson(req) {
+async function readJson(req, max = 16 * 1024) {
   let size = 0
   const chunks = []
   for await (const c of req) {
     size += c.length
-    if (size > 16 * 1024) throw Object.assign(new Error('Request too large'), { status: 413 })
+    if (size > max) throw Object.assign(new Error('Request too large'), { status: 413 })
     chunks.push(c)
   }
   try { return JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}') } catch { return {} }
@@ -192,6 +194,35 @@ async function handle(req, res) {
     return res.end(await readFile(join(EDITOR_DIR, name)))
   }
 
+  // ── claude.ai connector (remote MCP, Streamable HTTP) ──
+  // Auth: "Authorization: Bearer <MCP_TOKEN>" header, or the token as the last path segment (/mcp/<token>).
+  const mcpMatch = url.pathname.match(/^\/mcp(?:\/([^/]+))?\/?$/)
+  if (mcpMatch) {
+    if (!mcpEnabled()) return send(res, 503, { error: 'The claude.ai connector is switched off. Set MCP_TOKEN in Coolify to turn it on.' })
+    const given = mcpMatch[1] ? decodeURIComponent(mcpMatch[1]) : String(req.headers.authorization || '').replace(/^Bearer\s+/i, '')
+    if (!sameSecret(given, process.env.MCP_TOKEN)) {
+      return send(res, 401, { jsonrpc: '2.0', id: null, error: { code: -32001, message: 'Unauthorized: wrong or missing connector token.' } }, { 'www-authenticate': 'Bearer realm="quayside"' })
+    }
+    if (req.method !== 'POST') return send(res, 405, { jsonrpc: '2.0', id: null, error: { code: -32000, message: 'Use POST.' } }, { allow: 'POST' })
+    const proto = String(req.headers['x-forwarded-proto'] || 'http').split(',')[0]
+    const out = await handleMcp(await readJson(req, 2 * 1024 * 1024), `${proto}://${req.headers.host}`)
+    if (out.status === 202) { res.writeHead(202); return res.end() }
+    return send(res, out.status, out.body)
+  }
+
+  // ── live reload for open previews (/hpanelN/?live=1) ──
+  if (url.pathname === '/api/changes' && req.method === 'GET') {
+    const slug = url.searchParams.get('v')
+    if (!versions.validSlug(slug)) return send(res, 400, { error: 'Bad version' })
+    res.writeHead(200, { 'content-type': 'text/event-stream; charset=utf-8', 'cache-control': 'no-cache, no-transform', 'x-accel-buffering': 'no', connection: 'keep-alive' })
+    res.write(': connected\n\n')
+    const onChange = changed => { if (changed === slug) res.write(`event: change\ndata: {}\n\n`) }
+    versions.changes.on('change', onChange)
+    const ping = setInterval(() => res.write(': ping\n\n'), 25000)
+    req.on('close', () => { clearInterval(ping); versions.changes.off('change', onChange) })
+    return
+  }
+
   // ── live editor API (password protected) ──
   if (url.pathname.startsWith('/api/editor/')) {
     const action = url.pathname.slice('/api/editor/'.length)
@@ -211,7 +242,7 @@ async function handle(req, res) {
       const slug = url.searchParams.get('v')
       if (!isEditor(req)) return send(res, 200, { authed: false, enabled: Boolean(EDITOR_PASSWORD) })
       if (!(await versions.exists(slug))) return send(res, 404, { error: 'This version does not exist.' })
-      return send(res, 200, { authed: true, enabled: true, versions: await versions.listVersions(), history: await versions.historyInfo(slug), busy: editing.has(slug), ai: editorInfo() })
+      return send(res, 200, { authed: true, enabled: true, versions: await versions.listVersions(), history: await versions.historyInfo(slug), busy: editing.has(slug), ai: editorInfo(), connector: mcpEnabled() })
     }
     if (!isEditor(req)) return send(res, 401, { error: 'Please log in again.' })
     if (req.method !== 'POST') return send(res, 405, { error: 'Method not allowed' })

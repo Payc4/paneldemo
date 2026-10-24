@@ -76,6 +76,12 @@ button { cursor: pointer; }
 .preview__frame.is-phone iframe { width: 390px; max-width: 100%; border-radius: 22px; }
 .preview.is-busy iframe { opacity: .92; }
 
+.cbox { position: fixed; top: 64px; right: 14px; z-index: 8; width: 420px; max-width: calc(100% - 28px); padding: 14px 16px 16px; border-radius: 14px; background: #fff; box-shadow: 0 0 0 1px var(--line), 0 18px 48px rgba(18,12,36,.2); font-size: 13px; }
+.cbox__head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.cbox p { margin: 6px 0 0; color: var(--ink-2); }
+.cbox ol { margin: 6px 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 8px; color: var(--ink-2); }
+.cbox code { padding: 1px 5px; border-radius: 5px; background: var(--bg); font-size: 12px; overflow-wrap: anywhere; }
+.cbox a { color: var(--accent); overflow-wrap: anywhere; }
 .toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); z-index: 9; padding: 11px 16px; border-radius: 10px; background: var(--ink); color: #fff; font-size: 13.5px; box-shadow: 0 12px 32px rgba(18,12,36,.3); max-width: calc(100% - 32px); }
 
 @media (max-width: 1100px) {
