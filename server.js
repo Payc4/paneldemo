@@ -4,7 +4,8 @@
 //   ANTHROPIC_MODEL      default claude-sonnet-5-5
 //   DAILY_CHAT_LIMIT     total agent messages per day across all visitors (default 1000)
 //   STATS_KEY            password for /stats?key=... (if unset, /stats is open)
-//   EDITOR_PASSWORD      password for the live editor at /hpanelN/edit (editor is off when unset)
+//   EDITOR_PASSWORD      optional separate password for the live editor at /hpanelN/edit. When unset, the editor
+//                        uses SITE_PASSWORD: anyone signed in to the site can edit (off when neither is set)
 //   EDITOR_MODEL         model for the live editor (default: ANTHROPIC_MODEL, else claude-sonnet-5-5)
 //   EDITOR_DAILY_LIMIT   editor requests per day (default 300)
 //   SITE_PASSWORD        password for the whole site (login page at /login); site is open when unset
@@ -140,7 +141,8 @@ async function editorIndex() {
 }
 const redirect = (res, to) => { res.writeHead(302, { location: to, 'cache-control': 'no-store' }); res.end() }
 
-const EDITOR_PASSWORD = process.env.EDITOR_PASSWORD || ''
+const EDITOR_PASSWORD = process.env.EDITOR_PASSWORD || process.env.SITE_PASSWORD || ''
+const EDITOR_USES_SITE = !process.env.EDITOR_PASSWORD && Boolean(process.env.SITE_PASSWORD)
 const EDITOR_DAILY = Number(process.env.EDITOR_DAILY_LIMIT || 300)
 const editorToken = () => createHmac('sha256', EDITOR_PASSWORD).update('quayside-editor-v1').digest('hex')
 const cookies = req => Object.fromEntries(String(req.headers.cookie || '').split(';').map(c => c.trim().split('=')).filter(p => p[0]).map(([k, ...v]) => [k, decodeURIComponent(v.join('='))]))
@@ -148,7 +150,8 @@ function sameSecret(a, b) {
   const x = Buffer.from(String(a)), y = Buffer.from(String(b))
   return x.length === y.length && timingSafeEqual(x, y)
 }
-const isEditor = req => Boolean(EDITOR_PASSWORD) && sameSecret(cookies(req).qp_editor || '', editorToken())
+// With one shared password, being signed in to the site is enough to use the editor.
+const isEditor = req => Boolean(EDITOR_PASSWORD) && (EDITOR_USES_SITE ? siteOpen(req) : sameSecret(cookies(req).qp_editor || '', editorToken()))
 const loginHits = new Map()
 
 // ── site-wide password (SITE_PASSWORD) ──
@@ -292,7 +295,7 @@ async function handle(req, res) {
   if (url.pathname.startsWith('/api/editor/')) {
     const action = url.pathname.slice('/api/editor/'.length)
     if (action === 'login' && req.method === 'POST') {
-      if (!EDITOR_PASSWORD) return send(res, 503, { error: 'The editor is switched off. Set EDITOR_PASSWORD in Coolify to turn it on.' })
+      if (!EDITOR_PASSWORD) return send(res, 503, { error: 'The editor is switched off. Set SITE_PASSWORD in Coolify to turn it on.' })
       const ip = clientIp(req), now = Date.now()
       const hits = (loginHits.get(ip) || []).filter(t => now - t < 15 * 60 * 1000)
       if (hits.length >= 10) return send(res, 429, { error: 'Too many attempts. Try again in 15 minutes.' })
