@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Live editor — Quayside</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="/editor-assets/editor.css">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <script type="module" src="/editor-assets/editor.js"></script>
+</head>
+<body>
+  <!-- login / off -->
+  <main class="gate" id="gate" hidden>
+    <form class="gate__box" id="loginForm">
+      <span class="mark" aria-hidden="true"><svg width="36" height="36" viewBox="0 0 28 28"><rect width="28" height="28" rx="8" fill="#673DE6"/><path d="M6 17c2.7-3.6 5.3-3.6 8 0s5.3 3.6 8 0" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><circle cx="20" cy="9" r="2" fill="#fff"/></svg></span>
+      <h1>Live editor</h1>
+      <p id="gateText">Enter the editor password to change <b id="gateSlug"></b>.</p>
+      <div id="gateFields">
+        <label for="pw" class="sr-only">Password</label>
+        <input id="pw" type="password" autocomplete="current-password" placeholder="Password" required>
+        <button class="btn btn-primary" type="submit">Log in</button>
+        <p class="gate__err" id="gateErr" role="alert"></p>
+      </div>
+    </form>
+  </main>
+
+  <!-- editor -->
+  <div class="ed" id="ed" hidden>
+    <header class="bar">
+      <span class="mark" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 28 28"><rect width="28" height="28" rx="8" fill="#673DE6"/><path d="M6 17c2.7-3.6 5.3-3.6 8 0s5.3 3.6 8 0" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><circle cx="20" cy="9" r="2" fill="#fff"/></svg></span>
+      <b class="bar__title">Live editor</b>
+      <label class="sr-only" for="verSel">Version</label>
+      <select id="verSel" class="sel"></select>
+      <div class="bar__group">
+        <button class="tbtn" id="undoBtn" disabled><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>Undo</button>
+        <button class="tbtn" id="redoBtn" disabled><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg>Redo</button>
+      </div>
+      <span class="bar__spacer"></span>
+      <div class="seg" role="group" aria-label="Preview size">
+        <button class="is-on" data-size="desktop">Desktop</button><button data-size="phone">Phone</button>
+      </div>
+      <a class="tbtn" id="openBtn" target="_blank" rel="noopener">Open page<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></a>
+      <button class="btn btn-primary btn-sm" id="saveAsBtn">Save as new version</button>
+      <button class="tbtn tbtn--icon" id="logoutBtn" aria-label="Log out" title="Log out"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h5M15 8l4 4-4 4M19 12H9"/></svg></button>
+    </header>
+
+    <div class="tabs-m" role="tablist">
+      <button role="tab" class="is-on" data-pane="chat" aria-selected="true">Chat</button>
+      <button role="tab" data-pane="preview" aria-selected="false">Preview</button>
+    </div>
+
+    <div class="panes">
+      <section class="chat" id="chatPane" aria-label="Chat">
+        <div class="chat__head"><b>Describe a change</b><button class="link" id="newChatBtn">New chat</button></div>
+        <div class="chat__log" id="log" aria-live="polite"></div>
+        <form class="chat__form" id="form">
+          <label for="msg" class="sr-only">Describe a change</label>
+          <textarea id="msg" rows="3" maxlength="3000" placeholder="e.g. Make the first deals slide invite people to connect their AI tools"></textarea>
+          <div class="chat__row"><span class="chat__hint" id="aiInfo"></span><button class="btn btn-primary" id="sendBtn" type="submit">Apply</button></div>
+        </form>
+      </section>
+      <section class="preview" id="previewPane" aria-label="Preview">
+        <div class="preview__frame" id="frameWrap"><iframe id="frame" title="Live preview"></iframe></div>
+      </section>
+    </div>
+  </div>
+  <div class="toast" id="toast" role="status" hidden></div>
+</body>
+</html>

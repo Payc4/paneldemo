@@ -4,18 +4,26 @@
 //   ANTHROPIC_MODEL      default claude-sonnet-5-5
 //   DAILY_CHAT_LIMIT     total agent messages per day across all visitors (default 1000)
 //   STATS_KEY            password for /stats?key=... (if unset, /stats is open)
+//   EDITOR_PASSWORD      password for the live editor at /hpanelN/edit (editor is off when unset)
+//   EDITOR_MODEL         model for the live editor (default: ANTHROPIC_MODEL, else claude-sonnet-5-5)
+//   EDITOR_DAILY_LIMIT   editor requests per day (default 300)
+//   VERSIONS_DIR         where prototype versions are stored (default ./versions — keep it on a persistent volume)
 
 import { createServer } from 'node:http'
 import { readFile, stat } from 'node:fs/promises'
-import { createHash, randomUUID } from 'node:crypto'
+import { createHash, createHmac, randomUUID, timingSafeEqual } from 'node:crypto'
 import { extname, join, normalize } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { newAccount, personas, publicState, quote } from './lib/commerce.js'
 import { agentInfo, runTurn } from './lib/agent.js'
 import { record, reset as resetStats, statsHtml, validPlacement } from './lib/stats.js'
+import * as versions from './lib/versions.js'
+import { runEdit, resetConversation, editorInfo } from './lib/editor.js'
 
 const PORT = Number(process.env.PORT || 3000)
 const PUBLIC = fileURLToPath(new URL('./public/', import.meta.url))
+const EDITOR_DIR = fileURLToPath(new URL('./editor/', import.meta.url))
+await versions.init()
 
 // Cache-busting: index.html links styles.css and app.js with a content hash (?v=…), so a browser
 // never pairs a new page with an old stylesheet or script after a deploy.
@@ -99,6 +107,49 @@ const securityHeaders = {
   'content-security-policy': "default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; frame-ancestors 'self'",
 }
 
+// ───────────────────────── versions & editor helpers ─────────────────────────
+
+const fileHashes = new Map() // key -> { mtime, hash }
+async function contentHash(key, read, mtime) {
+  const hit = fileHashes.get(key)
+  if (hit && hit.mtime === mtime) return hit.hash
+  const hash = createHash('sha256').update(await read()).digest('hex').slice(0, 10)
+  fileHashes.set(key, { mtime, hash })
+  return hash
+}
+const versionDir = slug => join(process.env.VERSIONS_DIR || fileURLToPath(new URL('./versions/', import.meta.url)), slug)
+async function versionAsset(slug, name) {
+  const st = await stat(join(versionDir(slug), name))
+  return contentHash(slug + '/' + name, () => versions.readVersionFile(slug, name), st.mtimeMs)
+}
+async function versionIndex(slug) {
+  let html = await versions.readVersionFile(slug, 'index.html')
+  for (const name of ['styles.css', 'app.js']) html = html.replaceAll(`"/${name}"`, `"${name}?v=${await versionAsset(slug, name)}"`)
+  return html
+}
+async function editorIndex() {
+  let html = await readFile(join(EDITOR_DIR, 'index.html'), 'utf8')
+  for (const name of ['editor.css', 'editor.js']) {
+    const st = await stat(join(EDITOR_DIR, name))
+    html = html.replaceAll(`"/editor-assets/${name}"`, `"/editor-assets/${name}?v=${await contentHash('editor/' + name, () => readFile(join(EDITOR_DIR, name)), st.mtimeMs)}"`)
+  }
+  return html
+}
+const redirect = (res, to) => { res.writeHead(302, { location: to, 'cache-control': 'no-store' }); res.end() }
+
+const EDITOR_PASSWORD = process.env.EDITOR_PASSWORD || ''
+const EDITOR_DAILY = Number(process.env.EDITOR_DAILY_LIMIT || 300)
+const editorToken = () => createHmac('sha256', EDITOR_PASSWORD).update('quayside-editor-v1').digest('hex')
+const cookies = req => Object.fromEntries(String(req.headers.cookie || '').split(';').map(c => c.trim().split('=')).filter(p => p[0]).map(([k, ...v]) => [k, decodeURIComponent(v.join('='))]))
+function sameSecret(a, b) {
+  const x = Buffer.from(String(a)), y = Buffer.from(String(b))
+  return x.length === y.length && timingSafeEqual(x, y)
+}
+const isEditor = req => Boolean(EDITOR_PASSWORD) && sameSecret(cookies(req).qp_editor || '', editorToken())
+const loginHits = new Map()
+let editDay = new Date().toDateString(), editCount = 0
+const editing = new Set()
+
 let actionSeq = 0
 const newActionId = () => 'a' + (++actionSeq).toString(36) + randomUUID().slice(0, 6)
 
@@ -108,6 +159,106 @@ async function handle(req, res) {
   const url = new URL(req.url, 'http://x')
 
   if (url.pathname === '/healthz') return send(res, 200, 'ok')
+
+  // ── prototype versions: /hpanelN/ (page), /hpanelN/edit (live editor) ──
+  if (url.pathname === '/' && (req.method === 'GET' || req.method === 'HEAD')) return redirect(res, '/hpanel1/' + url.search)
+  const vmatch = url.pathname.match(/^\/(hpanel\d{1,3})(\/.*)?$/i)
+  if (vmatch && (req.method === 'GET' || req.method === 'HEAD')) {
+    const slug = vmatch[1].toLowerCase()
+    const rest = vmatch[2] || ''
+    if (vmatch[1] !== slug) return redirect(res, '/' + slug + rest + url.search)
+    if (!(await versions.exists(slug))) return send(res, 404, 'This version does not exist.')
+    if (!rest) return redirect(res, `/${slug}/${url.search}`)
+    if (rest === '/') {
+      res.writeHead(200, { 'content-type': MIME['.html'], 'cache-control': 'no-cache', ...securityHeaders })
+      return res.end(req.method === 'HEAD' ? undefined : await versionIndex(slug))
+    }
+    const asset = rest.slice(1)
+    if (asset === 'styles.css' || asset === 'app.js') {
+      const versioned = url.searchParams.get('v') && url.searchParams.get('v') === await versionAsset(slug, asset)
+      res.writeHead(200, { 'content-type': MIME[extname(asset)], 'cache-control': versioned ? 'public, max-age=31536000, immutable' : 'no-cache', ...securityHeaders })
+      return res.end(req.method === 'HEAD' ? undefined : await versions.readVersionFile(slug, asset))
+    }
+    if (rest === '/edit' || rest === '/edit/') {
+      res.writeHead(200, { 'content-type': MIME['.html'], 'cache-control': 'no-cache', ...securityHeaders })
+      return res.end(req.method === 'HEAD' ? undefined : await editorIndex())
+    }
+    return send(res, 404, 'Not found')
+  }
+  if (url.pathname.startsWith('/editor-assets/') && req.method === 'GET') {
+    const name = url.pathname.slice('/editor-assets/'.length)
+    if (!['editor.css', 'editor.js'].includes(name)) return send(res, 404, 'Not found')
+    res.writeHead(200, { 'content-type': MIME[extname(name)], 'cache-control': url.searchParams.get('v') ? 'public, max-age=31536000, immutable' : 'no-cache', ...securityHeaders })
+    return res.end(await readFile(join(EDITOR_DIR, name)))
+  }
+
+  // ── live editor API (password protected) ──
+  if (url.pathname.startsWith('/api/editor/')) {
+    const action = url.pathname.slice('/api/editor/'.length)
+    if (action === 'login' && req.method === 'POST') {
+      if (!EDITOR_PASSWORD) return send(res, 503, { error: 'The editor is switched off. Set EDITOR_PASSWORD in Coolify to turn it on.' })
+      const ip = clientIp(req), now = Date.now()
+      const hits = (loginHits.get(ip) || []).filter(t => now - t < 15 * 60 * 1000)
+      if (hits.length >= 10) return send(res, 429, { error: 'Too many attempts. Try again in 15 minutes.' })
+      hits.push(now); loginHits.set(ip, hits)
+      const body = await readJson(req)
+      if (!sameSecret(body.password || '', EDITOR_PASSWORD)) return send(res, 401, { error: 'Wrong password.' })
+      const secure = String(req.headers['x-forwarded-proto'] || '').includes('https') ? '; Secure' : ''
+      return send(res, 200, { ok: true }, { 'set-cookie': `qp_editor=${editorToken()}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${7 * 86400}${secure}` })
+    }
+    if (action === 'logout' && req.method === 'POST') return send(res, 200, { ok: true }, { 'set-cookie': 'qp_editor=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0' })
+    if (action === 'state' && req.method === 'GET') {
+      const slug = url.searchParams.get('v')
+      if (!isEditor(req)) return send(res, 200, { authed: false, enabled: Boolean(EDITOR_PASSWORD) })
+      if (!(await versions.exists(slug))) return send(res, 404, { error: 'This version does not exist.' })
+      return send(res, 200, { authed: true, enabled: true, versions: await versions.listVersions(), history: await versions.historyInfo(slug), busy: editing.has(slug), ai: editorInfo() })
+    }
+    if (!isEditor(req)) return send(res, 401, { error: 'Please log in again.' })
+    if (req.method !== 'POST') return send(res, 405, { error: 'Method not allowed' })
+    const body = await readJson(req)
+    const slug = String(body.version || '')
+    if (!(await versions.exists(slug))) return send(res, 404, { error: 'This version does not exist.' })
+    if (editing.has(slug) && action !== 'new-chat') return send(res, 409, { error: 'A change is still being made. Wait for it to finish.' })
+
+    if (action === 'undo' || action === 'redo') {
+      const label = await versions[action](slug)
+      return send(res, 200, { ok: Boolean(label), label, history: await versions.historyInfo(slug) })
+    }
+    if (action === 'save-as') {
+      const next = await versions.saveAsNew(slug)
+      return send(res, 200, { slug: next, versions: await versions.listVersions() })
+    }
+    if (action === 'new-chat') { resetConversation(slug); return send(res, 200, { ok: true }) }
+    if (action === 'chat') {
+      const message = String(body.message || '').trim()
+      if (!message) return send(res, 400, { error: 'Type what you want to change.' })
+      if (message.length > 3000) return send(res, 400, { error: 'Please keep requests under 3,000 characters.' })
+      if (new Date().toDateString() !== editDay) { editDay = new Date().toDateString(); editCount = 0 }
+      if (editCount >= EDITOR_DAILY) return send(res, 429, { error: 'The editor has reached its limit for today.' })
+      editCount++
+      editing.add(slug)
+      res.writeHead(200, { 'content-type': 'text/event-stream; charset=utf-8', 'cache-control': 'no-cache, no-transform', 'x-accel-buffering': 'no', connection: 'keep-alive' })
+      const emit = (event, data) => res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`)
+      const ping = setInterval(() => res.write(': ping\n\n'), 15000)
+      try {
+        await runEdit(slug, message, emit)
+        emit('history', await versions.historyInfo(slug))
+      } catch (e) {
+        console.error('editor error', e.status || '', e.message)
+        const msg = e.status === 401 ? 'The AI key was rejected (check ANTHROPIC_API_KEY).'
+          : e.status === 429 ? 'The AI is busy or the spending limit was reached. Try again shortly.'
+          : e.status === 503 ? e.message
+          : 'Something went wrong while editing. Any finished edits were kept — you can Undo them.'
+        emit('error', { message: msg })
+        emit('history', await versions.historyInfo(slug))
+      } finally {
+        clearInterval(ping)
+        editing.delete(slug)
+      }
+      return res.end()
+    }
+    return send(res, 404, { error: 'Unknown action' })
+  }
 
   if (url.pathname === '/stats' && req.method === 'GET') {
     const key = process.env.STATS_KEY || ''
@@ -223,9 +374,8 @@ async function handle(req, res) {
     res.writeHead(200, { 'content-type': MIME[extname(file)] || 'application/octet-stream', 'cache-control': cache, ...securityHeaders })
     return res.end(req.method === 'HEAD' ? undefined : data)
   } catch {
-    const data = await versionedIndex()
-    res.writeHead(200, { 'content-type': MIME['.html'], 'cache-control': 'no-cache', ...securityHeaders })
-    return res.end(data)
+    if (extname(path)) return send(res, 404, 'Not found')
+    return redirect(res, '/hpanel1/')
   }
 }
 

@@ -37,8 +37,9 @@ const app = { session: null, data: null, agent: null, activity: [], busy: false,
 
 const seen = new Set()
 let queue = []
+const PREVIEW = new URLSearchParams(location.search).has('preview') // live-editor preview: don't count stats
 function track(type, placement) {
-  if (!placement) return
+  if (!placement || PREVIEW) return
   if (type === 'view') {
     if (seen.has(placement)) return
     seen.add(placement)
