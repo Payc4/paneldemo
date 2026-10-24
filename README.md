@@ -52,6 +52,7 @@ No dependencies; Node 20+.
    - `EDITOR_PASSWORD` — password for the live editor (`/hpanel1/edit`). The editor is off when this isn't set.
    - optional `EDITOR_MODEL` — model for the editor (default: `ANTHROPIC_MODEL`, else `claude-sonnet-5-5`).
    - optional `EDITOR_DAILY_LIMIT` — editor requests per day (default 300).
+   - optional `SITE_PASSWORD` — puts the whole site behind a password page (remembered for 30 days per browser). The site is open when this isn't set. The claude.ai connector keeps using its own token.
    - `MCP_TOKEN` — secret for the claude.ai connector at `/mcp`. The connector is off when this isn't set.
 4. **Domain**: use Coolify's generated sslip.io address, or add an A record (e.g. `panel.yourdomain.com → server IP`) and enter `https://panel.yourdomain.com` in the Domains field.
 5. Deploy.

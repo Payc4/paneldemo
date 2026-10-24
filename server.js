@@ -7,6 +7,7 @@
 //   EDITOR_PASSWORD      password for the live editor at /hpanelN/edit (editor is off when unset)
 //   EDITOR_MODEL         model for the live editor (default: ANTHROPIC_MODEL, else claude-sonnet-5-5)
 //   EDITOR_DAILY_LIMIT   editor requests per day (default 300)
+//   SITE_PASSWORD        password for the whole site (login page at /login); site is open when unset
 //   MCP_TOKEN            secret for the claude.ai connector at /mcp (connector is off when unset)
 //   VERSIONS_DIR         where prototype versions are stored (default ./versions — keep it on a persistent volume)
 
@@ -149,6 +150,42 @@ function sameSecret(a, b) {
 }
 const isEditor = req => Boolean(EDITOR_PASSWORD) && sameSecret(cookies(req).qp_editor || '', editorToken())
 const loginHits = new Map()
+
+// ── site-wide password (SITE_PASSWORD) ──
+const SITE_PASSWORD = process.env.SITE_PASSWORD || ''
+const siteToken = () => createHmac('sha256', SITE_PASSWORD).update('quayside-site-v1').digest('hex')
+const siteOpen = req => !SITE_PASSWORD || sameSecret(cookies(req).qp_site || '', siteToken())
+const safeNext = n => (typeof n === 'string' && /^\/(?!\/)[^\s\\]*$/.test(n) ? n : '/')
+function loginPage(next, error) {
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex, nofollow">
+<title>Quayside — sign in</title><link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&display=swap">
+<style>
+*{box-sizing:border-box}html,body{margin:0;height:100%}
+body{display:flex;align-items:center;justify-content:center;padding:16px;background:radial-gradient(ellipse at 50% 0%,#3A1A8A,#120C24 70%);font:14px/1.5 Geist,system-ui,-apple-system,sans-serif;color:#1D1E20}
+form{width:100%;max-width:360px;padding:30px 24px 26px;border-radius:18px;background:#fff;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.35)}
+h1{margin:14px 0 4px;font-size:20px;font-weight:600}p{margin:0 0 18px;color:#56546A;font-size:13.5px}
+input{width:100%;height:44px;margin-bottom:10px;padding:0 12px;border:0;border-radius:10px;box-shadow:inset 0 0 0 1px #E3E1EA;font:inherit;font-size:15px;outline:none}
+input:focus{box-shadow:inset 0 0 0 1.5px #673DE6}
+button{width:100%;height:42px;border:0;border-radius:10px;background:#673DE6;color:#fff;font:inherit;font-weight:600;cursor:pointer}button:hover{background:#5025D1}
+.err{margin:12px 0 0;color:#D63163;font-size:13px}
+</style></head><body>
+<form method="post" action="/login">
+<svg width="40" height="40" viewBox="0 0 28 28" aria-hidden="true"><rect width="28" height="28" rx="8" fill="#673DE6"/><path d="M6 17c2.7-3.6 5.3-3.6 8 0s5.3 3.6 8 0" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><circle cx="20" cy="9" r="2" fill="#fff"/></svg>
+<h1>Quayside</h1><p>This prototype is private. Enter the password to continue.</p>
+<input type="hidden" name="next" value="${String(next).replace(/[&"<>]/g, c => ({ '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' }[c]))}">
+<label for="pw" style="position:absolute;left:-9999px">Password</label>
+<input id="pw" name="password" type="password" autocomplete="current-password" placeholder="Password" required autofocus>
+<button type="submit">Enter</button>
+${error ? `<p class="err" role="alert">${error}</p>` : ''}
+</form></body></html>`
+}
+async function readForm(req) {
+  let size = 0
+  const chunks = []
+  for await (const c of req) { size += c.length; if (size > 8 * 1024) break; chunks.push(c) }
+  return Object.fromEntries(new URLSearchParams(Buffer.concat(chunks).toString('utf8')))
+}
 let editDay = new Date().toDateString(), editCount = 0
 const editing = new Set()
 
@@ -161,6 +198,34 @@ async function handle(req, res) {
   const url = new URL(req.url, 'http://x')
 
   if (url.pathname === '/healthz') return send(res, 200, 'ok')
+
+  // ── site-wide password ──
+  if (SITE_PASSWORD) {
+    const htmlHeaders = { 'content-type': MIME['.html'], 'cache-control': 'no-store', ...securityHeaders }
+    if (url.pathname === '/login') {
+      if (req.method === 'POST') {
+        const ip = clientIp(req), now = Date.now()
+        const hits = (loginHits.get('site:' + ip) || []).filter(t => now - t < 15 * 60 * 1000)
+        const form = await readForm(req)
+        const next = safeNext(form.next)
+        if (hits.length >= 10) { res.writeHead(429, htmlHeaders); return res.end(loginPage(next, 'Too many attempts. Try again in 15 minutes.')) }
+        hits.push(now); loginHits.set('site:' + ip, hits)
+        if (!sameSecret(form.password || '', SITE_PASSWORD)) { res.writeHead(401, htmlHeaders); return res.end(loginPage(next, 'Wrong password.')) }
+        const secure = String(req.headers['x-forwarded-proto'] || '').includes('https') ? '; Secure' : ''
+        res.writeHead(303, { location: next, 'cache-control': 'no-store', 'set-cookie': `qp_site=${siteToken()}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${30 * 86400}${secure}` })
+        return res.end()
+      }
+      if (siteOpen(req)) return redirect(res, safeNext(url.searchParams.get('next')))
+      res.writeHead(200, htmlHeaders)
+      return res.end(loginPage(safeNext(url.searchParams.get('next')), ''))
+    }
+    // The claude.ai connector has its own token, and the favicon is shown on the login page.
+    const exempt = /^\/mcp(\/|$)/.test(url.pathname) || url.pathname === '/favicon.svg'
+    if (!exempt && !siteOpen(req)) {
+      if (url.pathname.startsWith('/api/') || req.method !== 'GET') return send(res, 401, { error: 'Please sign in again.' })
+      return redirect(res, '/login?next=' + encodeURIComponent(url.pathname + url.search))
+    }
+  }
 
   // ── prototype versions: /hpanelN/ (page), /hpanelN/edit (live editor) ──
   if (url.pathname === '/' && (req.method === 'GET' || req.method === 'HEAD')) return redirect(res, '/hpanel1/' + url.search)
