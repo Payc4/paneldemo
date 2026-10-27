@@ -1,4 +1,4 @@
-// Quayside panel — concept demo server. No dependencies; Node 20+.
+// Hostinger panel — concept demo server. No dependencies; Node 20+.
 //   PORT                 (default 3000)
 //   ANTHROPIC_API_KEY    Claude key; without it the agent runs in a simple demo mode
 //   ANTHROPIC_MODEL      default claude-sonnet-5-5
@@ -161,7 +161,7 @@ const siteOpen = req => !SITE_PASSWORD || sameSecret(cookies(req).qp_site || '',
 const safeNext = n => (typeof n === 'string' && /^\/(?!\/)[^\s\\]*$/.test(n) ? n : '/')
 function loginPage(next, error) {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex, nofollow">
-<title>Quayside — sign in</title><link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<title>Hostinger — sign in</title><link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&display=swap">
 <style>
 *{box-sizing:border-box}html,body{margin:0;height:100%}
@@ -174,8 +174,8 @@ button{width:100%;height:42px;border:0;border-radius:10px;background:#673DE6;col
 .err{margin:12px 0 0;color:#D63163;font-size:13px}
 </style></head><body>
 <form method="post" action="/login">
-<svg width="40" height="40" viewBox="0 0 28 28" aria-hidden="true"><rect width="28" height="28" rx="8" fill="#673DE6"/><path d="M6 17c2.7-3.6 5.3-3.6 8 0s5.3 3.6 8 0" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><circle cx="20" cy="9" r="2" fill="#fff"/></svg>
-<h1>Quayside</h1><p>This prototype is private. Enter the password to continue.</p>
+<svg width="40" height="40" viewBox="0 0 28 28" aria-hidden="true"><rect width="28" height="28" rx="8" fill="#673DE6"/><path transform="translate(6.58 6.5) scale(.5)" fill-rule="evenodd" clip-rule="evenodd" d="M2.00025 14.046V0.000497794L9.08916 3.78046V10.1086L18.4735 10.1132L25.6774 14.046H2.00025ZM20.3925 8.95058V0L27.6725 3.6859V13.1797L20.3925 8.95058ZM20.3924 26.1177V19.8441L10.9358 19.8375C10.9446 19.8793 3.6123 15.8418 3.6123 15.8418L27.6725 15.9547V30L20.3924 26.1177ZM2 26.1177L2.00025 16.9393L9.08916 21.0683V29.8033L2 26.1177Z" fill="#fff"/></svg>
+<h1>Hostinger</h1><p>This prototype is private. Enter the password to continue.</p>
 <input type="hidden" name="next" value="${String(next).replace(/[&"<>]/g, c => ({ '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' }[c]))}">
 <label for="pw" style="position:absolute;left:-9999px">Password</label>
 <input id="pw" name="password" type="password" autocomplete="current-password" placeholder="Password" required autofocus>

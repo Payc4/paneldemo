@@ -1,4 +1,4 @@
-# Quayside panel — concept demo
+# Hostinger panel — concept demo
 
 A redesigned hosting control-panel home page with a working AI assistant (Claude).
 Made-up customer accounts and prices; nothing is ever charged.
