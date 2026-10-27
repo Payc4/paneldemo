@@ -1,4 +1,4 @@
-// Quayside panel — concept demo front-end. Renders everything from /api/state
+// Hostinger panel — concept demo front-end. Renders everything from /api/state
 // and reports views/clicks to /api/event for the /stats page.
 
 const $ = sel => document.querySelector(sel)
@@ -397,7 +397,7 @@ function renderPage() {
   $('#homePage').hidden = !home
   $('#page').hidden = home
   $('.body').classList.toggle('is-rail', r === 'domains/dns')
-  document.title = view === 'agent' ? 'Quayside — Agent' : `Quayside — ${PAGE_TITLES[r] || 'Websites'}`
+  document.title = view === 'agent' ? 'Hostinger — Agent' : `Hostinger — ${PAGE_TITLES[r] || 'Websites'}`
   syncNav()
   if (home || !app.data) return
   const [section, sub] = r.split('/')
@@ -603,7 +603,7 @@ function pageTransfer() {
         <rect x="36" y="38" width="34" height="26" rx="4" fill="#fff"/>
         <path d="M42 46h22l-5-5M64 56H42l5 5" stroke="#8C6CF7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <h2>Transfer your domain to Quayside</h2>
+      <h2>Transfer your domain to Hostinger</h2>
       <form class="xfer__form" id="xferForm">
         <label for="xferInput" class="sr-only">Domain to transfer</label>
         <input id="xferInput" type="text" placeholder="Type the domain you want to transfer" autocomplete="off" spellcheck="false">
@@ -638,7 +638,7 @@ function pageDns() {
     </div>
     ${tab === 'records' ? `<section class="pg-card dns-info">
       <span class="dns-info__icon" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 26 26"><circle cx="13" cy="13" r="11" fill="#673DE6"/><path d="M2 13h22M13 2c-4 3-5 7-5 11s1 8 5 11M13 2c4 3 5 7 5 11s-1 8-5 11" stroke="#fff" stroke-opacity=".35" stroke-width="1.2" fill="none"/><rect x="2" y="9" width="22" height="8" rx="2" fill="#fff"/><text x="13" y="15.4" text-anchor="middle" font-family="Geist, system-ui, sans-serif" font-size="6.6" font-weight="800" fill="#2B2350">DNS</text></svg></span>
-      <div class="dns-info__text"><h2>Manage your DNS records at Quayside</h2><p>Manage your DNS records at Quayside. Connect an external domain to a site or transfer a domain to Quayside.</p></div>
+      <div class="dns-info__text"><h2>Manage your DNS records at Hostinger</h2><p>Manage your DNS records at Hostinger. Connect an external domain to a site or transfer a domain to Hostinger.</p></div>
       <button class="btn btn-primary btn-sm">Check guide</button>
     </section>` : `<section class="pg-card dns-history"><p>No DNS changes in the last 30 days.</p></section>`}
   </div>`
@@ -719,7 +719,7 @@ const ICON2 = {
   lockS: '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
   target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
 }
-const QMARK = (size = 26) => `<svg width="${size}" height="${size}" viewBox="0 0 28 28" aria-hidden="true"><rect width="28" height="28" rx="8" fill="#673DE6"/><path d="M6 17c2.7-3.6 5.3-3.6 8 0s5.3 3.6 8 0" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><circle cx="20" cy="9" r="2" fill="#fff"/></svg>`
+const QMARK = (size = 26) => `<svg width="${size}" height="${size}" viewBox="0 0 28 28" aria-hidden="true"><rect width="28" height="28" rx="8" fill="#673DE6"/><path transform="translate(6.58 6.5) scale(.5)" fill-rule="evenodd" clip-rule="evenodd" d="M2.00025 14.046V0.000497794L9.08916 3.78046V10.1086L18.4735 10.1132L25.6774 14.046H2.00025ZM20.3925 8.95058V0L27.6725 3.6859V13.1797L20.3925 8.95058ZM20.3924 26.1177V19.8441L10.9358 19.8375C10.9446 19.8793 3.6123 15.8418 3.6123 15.8418L27.6725 15.9547V30L20.3924 26.1177ZM2 26.1177L2.00025 16.9393L9.08916 21.0683V29.8033L2 26.1177Z" fill="#fff"/></svg>`
 
 // ── Emails ──
 
@@ -728,14 +728,14 @@ const MAIL_PLANS = [
     free: true, title: 'Claim your free email',
     limits: [['db', '1 GB', 'storage per mailbox'], ['fwd', '1', 'Forwarding Rule'], ['at', '1', 'email alias'], ['x', '', 'Expandable mailbox storage']],
     ai: [[1, 'Agentic Email', true], [0, 'AI mailbox assistant'], [0, 'AI powered email search'], [0, 'Smart AI replies and message drafts'], [0, 'Instant AI email summaries']],
-    benefits: [[0, 'Read Receipts'], [0, 'No Quayside signature in Webmail'], [0, 'Encrypted storage'], [0, 'Advanced spam, malware, and phishing protection']],
+    benefits: [[0, 'Read Receipts'], [0, 'No Hostinger signature in Webmail'], [0, 'Encrypted storage'], [0, 'Advanced spam, malware, and phishing protection']],
     cta: '<button class="btn-soft">Start free</button>',
   },
   {
     title: 'Starter Business Email', save: 'Save 87%', was: '€2,99', price: '€0,39', note: 'Price per mailbox for a 48-month subscription',
     limits: [['db', '5 GB', 'storage per mailbox'], ['fwd', '5', 'forwarding rules'], ['at', '5', 'email aliases'], ['expand', '', 'Expandable mailbox storage']],
     ai: [[1, 'Agentic Email', true], [0, 'AI mailbox assistant'], [0, 'AI powered email search'], [0, 'Smart AI replies and message drafts'], [0, 'Instant AI email summaries']],
-    benefits: [[0, 'Read Receipts'], [1, 'No Quayside signature in Webmail'], [1, 'Encrypted storage'], [1, 'Advanced spam, malware, and phishing protection']],
+    benefits: [[0, 'Read Receipts'], [1, 'No Hostinger signature in Webmail'], [1, 'Encrypted storage'], [1, 'Advanced spam, malware, and phishing protection']],
     cta: '<button class="btn btn-primary btn-sm">See all plans</button>',
   },
 ]
@@ -763,9 +763,9 @@ function pageEmails() {
 
 const SERVICE_CATS = ['All', 'Hosting & VPS', 'Websites', 'Domains', 'Email & marketing', 'AI & automation', 'Other']
 const SERVICES = [
-  { cat: 'Websites', title: 'Quayside Ecommerce', text: 'Manage products and sell effortlessly across multiple sales channels all with zero transaction fees and built-in AI tools.', art: 'store', route: 'websites' },
+  { cat: 'Websites', title: 'Hostinger Ecommerce', text: 'Manage products and sell effortlessly across multiple sales channels all with zero transaction fees and built-in AI tools.', art: 'store', route: 'websites' },
   { cat: 'Email & marketing', title: 'Business Email', badge: 'Save up to 87%', text: 'Build your brand with a professional email address, like you@yourdomain.com.', art: 'mail', route: 'emails' },
-  { cat: 'Email & marketing', title: 'Quayside Reach', ai: true, badge: 'Save up to 67%', text: 'Create inbox-ready newsletters with an AI-powered email marketing tool.', art: 'reach', route: 'marketing/email' },
+  { cat: 'Email & marketing', title: 'Hostinger Reach', ai: true, badge: 'Save up to 67%', text: 'Create inbox-ready newsletters with an AI-powered email marketing tool.', art: 'reach', route: 'marketing/email' },
   { cat: 'Hosting & VPS', title: 'VPS hosting', badge: 'Save up to 70%', text: 'Full power, flexibility and speed with your own virtual private server.', art: 'vps', route: 'vps' },
   { cat: 'Domains', title: 'Domain names', badge: 'Up to 99% off', text: 'Find the perfect name for your brand, with free WHOIS privacy.', art: 'domain', route: 'domains/search' },
   { cat: 'AI & automation', title: 'Self-hosted n8n', badge: 'Save up to 70%', text: 'No-code AI workflows with unlimited runs on your own server.', art: 'n8n', route: 'apps/n8n' },
@@ -781,7 +781,7 @@ function serviceArt(kind) {
     <svg class="svc-store__cap" viewBox="0 0 120 80" aria-hidden="true"><path d="M14 52c0-26 20-40 44-40s38 16 38 40z" fill="#1E2A4A"/><path d="M58 12v40M30 22c8 6 10 18 10 30M86 22c-8 6-10 18-10 30" stroke="#33426B" stroke-width="2" fill="none"/><path d="M8 54c30-6 70-6 104 4-6 8-20 10-34 8-22-3-48-4-70-12z" fill="#16203A"/><circle cx="58" cy="12" r="3" fill="#33426B"/></svg>
     <div class="svc-store__chart"><b>€15,347</b><span>+11%</span><svg viewBox="0 0 100 30" preserveAspectRatio="none"><path d="M0 26C20 24 30 18 45 20s30-10 55-16" fill="none" stroke="#2BB673" stroke-width="2"/></svg></div></div>`)
   if (kind === 'mail') return wrap('linear-gradient(135deg,#6F4BF0,#9C82FF)', `
-    <div class="svc-mail"><div class="svc-mail__bar">${QMARK(14)}<b>QUAYSIDE</b><span>| Mail</span><strong>Inbox</strong></div>
+    <div class="svc-mail"><div class="svc-mail__bar">${QMARK(14)}<b>HOSTINGER</b><span>| Mail</span><strong>Inbox</strong></div>
     <div class="svc-mail__btn">${I('<path d="M4 20h4L19 9l-4-4L4 16z"/>', 12, 2)} New message</div><div class="svc-mail__pills"><i></i><i></i><i></i></div><div class="svc-mail__row"></div></div>`)
   if (kind === 'reach') return wrap('linear-gradient(135deg,#B9A8FF,#E3DBFF)', `
     <div class="svc-reach"><div class="svc-reach__tile"><svg viewBox="0 0 40 40" width="56" height="56" aria-hidden="true">${[0, 45, 90, 135, 180, 225, 270, 315].map(a => `<rect x="18" y="4" width="4" height="10" rx="2" fill="#1D1E20" transform="rotate(${a} 20 20)"/>`).join('')}</svg></div>
@@ -856,7 +856,7 @@ function pageEmailMarketing() {
         <span class="em-hero__guarantee">${I(ICON2.shield, 17, 1.7)}30-day money-back guarantee</span>
       </div>
       <div class="em-hero__art" aria-hidden="true">
-        <div class="em-app"><div class="em-app__brand">${QMARK(12)}<b>QUAYSIDE</b> | Reach</div><div class="em-app__side"><i></i><i></i><i></i><i></i><i></i><i></i></div><b class="em-app__title">Campaigns</b><div class="em-app__ghost"></div></div>
+        <div class="em-app"><div class="em-app__brand">${QMARK(12)}<b>HOSTINGER</b> | Reach</div><div class="em-app__side"><i></i><i></i><i></i><i></i><i></i><i></i></div><b class="em-app__title">Campaigns</b><div class="em-app__ghost"></div></div>
         <div class="em-mail"><span class="em-mail__from">dr.summer</span><div class="em-mail__hero"><b>Welcome to the family.</b>
           <svg viewBox="0 0 160 120" aria-hidden="true"><circle cx="58" cy="52" r="22" fill="#F2C8A8"/><path d="M34 50c0-22 44-28 48 0-8-8-30-10-48 0z" fill="#3A2416"/><path d="M20 120c4-34 20-46 38-46s34 12 38 46z" fill="#C8372D"/><circle cx="108" cy="48" r="20" fill="#E8B48E"/><path d="M90 42c4-16 32-18 36 0-10-6-24-6-36 0z" fill="#B88A5E"/><path d="M72 120c4-32 18-44 36-44s32 12 36 44z" fill="#2E6B4A"/></svg></div>
           <span class="em-mail__cta">Here's 10% OFF</span></div>
@@ -897,11 +897,11 @@ function pageAds() {
     <h1 class="pg-title">Google Ads</h1>
     <section class="ads-hero">
       <div class="ads-hero__text"><h2>Grow your business faster with Google Ads</h2>
-        <p>Get more customers with Google Ads from Quayside. Your ads will show on Google Search, YouTube, Gmail, Display, and Discover, bringing more people straight to your business.</p>
+        <p>Get more customers with Google Ads from Hostinger. Your ads will show on Google Search, YouTube, Gmail, Display, and Discover, bringing more people straight to your business.</p>
         <button class="btn btn-primary">Get started</button></div>
       <div class="ads-hero__art" aria-hidden="true">
         <span class="ads-hero__tile">${I(ICON2.target, 30, 1.8)}<small>Ads</small></span>
-        <div class="ads-hero__card"><b>Google Ads campaign</b><small>By Quayside</small>
+        <div class="ads-hero__card"><b>Google Ads campaign</b><small>By Hostinger</small>
           <ul>${['Show up high in Google', 'Grow site traffic instantly', 'Pay only for real clicks', 'Pause your ads anytime'].map(t => `<li>${I(ICON2.tick, 14, 2.4)}${t}</li>`).join('')}</ul></div>
         <span class="ads-hero__chip"><i>${I(ICON2.trend, 13, 2.2)}</i>+ 30% clicks</span>
       </div>
@@ -912,7 +912,7 @@ function pageAds() {
       <div class="ads-steps">
         ${step(1, ICON2.clock, 'One-click', 'Connect your Google Ads account', "Connect an existing Google Ads account, or we'll create one for you.")}
         ${step(2, ICON2.clock, 'Few minutes', 'Tell us about your business', 'Answer a few questions about your budget, audience, and goals.')}
-        ${step(3, ICON2.trend, 'Track here', 'Launch your ad and track results', 'Google reviews and launches your ad within 1 business day. Track results in Quayside.')}
+        ${step(3, ICON2.trend, 'Track here', 'Launch your ad and track results', 'Google reviews and launches your ad within 1 business day. Track results in Hostinger.')}
       </div>
     </section>
   </div>`
@@ -1129,7 +1129,7 @@ const AG_PAGES = {
   apps: () => {
     const tab = app.appsTab || 'popular'
     return `<div class="agp agp--wide">
-      <h1>Connections</h1><p class="agp__sub">Connect the apps you use so Quayside Agent can act on your behalf.</p>
+      <h1>Connections</h1><p class="agp__sub">Connect the apps you use so Hostinger Agent can act on your behalf.</p>
       <div class="conn-plus"><span class="conn-plus__icon">${I(ICON2.lockS, 18, 1.7)}</span><div><b>App connections are included in Agent Plus</b><small>Your agent can read, write and take action in the tools you already use.</small></div><button class="btn btn-primary btn-sm">Upgrade to Agent Plus</button></div>
       <div class="conn-bar"><div class="seg seg--text" role="tablist">${[['popular', 'Popular'], ['all', 'All'], ['mcp', 'Custom MCP']].map(([k, l]) => `<button role="tab" class="${tab === k ? 'is-on' : ''}" aria-selected="${tab === k}" data-apptab="${k}">${l}</button>`).join('')}</div>
         <label class="agp__search conn-search">${I(ICON.search, 16)}<span class="sr-only">Search apps</span><input type="search" id="appSearch" placeholder="Search apps" value="${esc(app.appQ || '')}"></label></div>
@@ -1142,23 +1142,23 @@ const SKILLS = [
   ['Pricing and renewal costs', 'Check what a plan costs to buy now and what it renews at'],
   ['Referrals and Partner Program', 'Check your referral rewards, commissions and Partner Program status'],
   ['Renew a service', 'Renew your existing plan or domain before it expires'],
-  ['Unrecognized charge', 'Trace a Quayside charge on your statement and find out what it was for'],
+  ['Unrecognized charge', 'Trace a Hostinger charge on your statement and find out what it was for'],
   ['Find the right plan', 'Get a plan recommendation for what you are building, with a payment link'],
-  ['AI Builder agentic mode', 'Get help with an app you are building by prompting Quayside AI Builder'],
-  ['AI Builder manual mode', 'Get help editing your site in the Quayside AI Builder editor'],
-  ['Builder store', 'Fix payments, shipping or orders on a Quayside store.'],
+  ['AI Builder agentic mode', 'Get help with an app you are building by prompting Hostinger AI Builder'],
+  ['AI Builder manual mode', 'Get help editing your site in the Hostinger AI Builder editor'],
+  ['Builder store', 'Fix payments, shipping or orders on a Hostinger store.'],
   ['Change a mistyped domain', 'Swap a domain you registered by mistake for the name you meant'],
   ['Set up domain forwarding', 'Point one of your domains at another, checked before it goes live'],
-  ['Domain move between accounts', 'Move a Quayside domain to another Quayside account.'],
+  ['Domain move between accounts', 'Move a Hostinger domain to another Hostinger account.'],
   ['Domain not resolving', 'Find out why your domain does not load or points to the wrong place'],
   ['Email mailbox management', 'Change existing mailboxes, passwords, forwards and aliases.'],
-  ['Email not sending or arriving', 'Diagnose delivery problems with email on your Quayside domain'],
+  ['Email not sending or arriving', 'Diagnose delivery problems with email on your Hostinger domain'],
   ['Email setup and client', 'Set up email on a domain and connect a mail app.'],
 ]
 const skillRow = (h, p) => `<button class="skill-row" data-ask="${esc(`Help me with: ${h}. ${p}.`)}" data-skill="${esc((h + ' ' + p).toLowerCase())}"><span><b>${esc(h)}</b><small>${esc(p)}</small></span>${I(ICON.chevR, 16, 2)}</button>`
 
 const APPS = [
-  ['Quayside Mail', '#673DE6', 'Read, search and send email from your Quayside mailboxes.', [], true],
+  ['Hostinger Mail', '#673DE6', 'Read, search and send email from your Hostinger mailboxes.', [], true],
   ['Gmail', '#D93025', 'Read, search and send email, and act on new messages as they arrive.', ['New email received', 'Email with label added']],
   ['Slack', '#4A154B', 'Post messages, read channels and threads, and react to new activity in your workspace.', ['New message in channel', 'You were mentioned']],
   ['Google Calendar', '#1A73E8', 'Create events, check availability and get reminders before meetings.', ['Event starting soon', 'New event created']],
@@ -1170,7 +1170,7 @@ const APPS = [
   ['Stripe', '#635BFF', 'Look up payments, customers and subscriptions.', ['Payment succeeded', 'Subscription cancelled']],
   ['Outlook', '#0F6CBD', 'Read and send email and manage your calendar.', ['New email received', 'Event starting soon']],
 ]
-const APP_SECTIONS = [['Featured', APPS.slice(0, 10).map(a => a[0])], ['Communication', ['Quayside Mail', 'Gmail', 'Outlook', 'Slack']]]
+const APP_SECTIONS = [['Featured', APPS.slice(0, 10).map(a => a[0])], ['Communication', ['Hostinger Mail', 'Gmail', 'Outlook', 'Slack']]]
 app.openTriggers = new Set()
 
 function appCard(name) {
@@ -1204,19 +1204,19 @@ function appListHtml() {
 const COUNTRIES = [['NL', '+31'], ['LT', '+370'], ['LV', '+371'], ['EE', '+372'], ['PL', '+48'], ['DE', '+49'], ['GB', '+44'], ['UA', '+380'], ['US', '+1']]
 const AG_MODALS = {
   memory: () => `<button class="ag-modal__x" data-agclose aria-label="Close">${I(ICON2.x, 18, 2)}</button>
-    <h2 class="ag-modal__title">Let Quayside Agent remember your setup</h2>
+    <h2 class="ag-modal__title">Let Hostinger Agent remember your setup</h2>
     <ul class="mem-list">
       <li>${I('<path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5M12 7v5l3 2"/>', 18, 1.8)}<div><b>No repeating yourself</b><small>Pick up right where you left off.</small></div></li>
-      <li>${I('<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>', 18, 1.8)}<div><b>Problems caught early</b><small>Quayside Agent flags issues in your setup before you ask.</small></div></li>
+      <li>${I('<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>', 18, 1.8)}<div><b>Problems caught early</b><small>Hostinger Agent flags issues in your setup before you ask.</small></div></li>
       <li>${I('<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0z"/>', 18, 1.8)}<div><b>Personalised advice</b><small>Answers built on your goals, not generic ones.</small></div></li>
     </ul>
     <button class="btn btn-primary ag-modal__wide" data-memory="on">Turn on AI memory</button>
     <button class="ag-modal__later" data-agclose>Maybe later</button>
-    <p class="ag-modal__fine">Quayside Agent remembers useful details from your onboarding, conversations (e.g. with Quayside Agent, Quayside AI Builder), and activity across Quayside, so every interaction feels tailored to you. <button class="link small" type="button">Privacy Policy</button></p>`,
+    <p class="ag-modal__fine">Hostinger Agent remembers useful details from your onboarding, conversations (e.g. with Hostinger Agent, Hostinger AI Builder), and activity across Hostinger, so every interaction feels tailored to you. <button class="link small" type="button">Privacy Policy</button></p>`,
 
   whatsapp: () => `<button class="ag-modal__x" data-agclose aria-label="Close">${I(ICON2.x, 18, 2)}</button>
     <span class="wa-label">${I('<path d="M4 20l1.4-4A8 8 0 1 1 8 18.6z"/>', 12, 2.2)}WHATSAPP</span>
-    <h2 class="ag-modal__title ag-modal__title--sm">Take Quayside Agent with you</h2>
+    <h2 class="ag-modal__title ag-modal__title--sm">Take Hostinger Agent with you</h2>
     <ul class="wa-checks"><li>${I(ICON2.tick, 12, 2.6)}Instant replies, 24/7</li><li>${I(ICON2.tick, 12, 2.6)}Websites &amp; domains on the go</li><li>${I(ICON2.tick, 12, 2.6)}Job results as they finish</li></ul>
     <form class="wa-form" id="waForm">
       <label for="waNumber"><b>Your WhatsApp number</b></label>
@@ -1225,12 +1225,12 @@ const AG_MODALS = {
         <input id="waNumber" type="tel" inputmode="tel" placeholder="415 555 0132" autocomplete="tel-national">
         <button class="btn btn-primary btn-sm" type="submit">Save</button>
       </div>
-      <p class="wa-help" id="waHelp">So Quayside Agent knows it's you when you message.</p>
+      <p class="wa-help" id="waHelp">So Hostinger Agent knows it's you when you message.</p>
     </form>`,
 
   mobile: () => `<button class="ag-modal__x" data-agclose aria-label="Close">${I(ICON2.x, 18, 2)}</button>
-    <h2 class="ag-modal__title">Quayside Agent, in your pocket</h2>
-    <p class="ag-modal__lead">Join the waitlist and be among the first to try the Quayside Agent app on your phone.</p>
+    <h2 class="ag-modal__title">Hostinger Agent, in your pocket</h2>
+    <p class="ag-modal__lead">Join the waitlist and be among the first to try the Hostinger Agent app on your phone.</p>
     <b class="mob-h">What's planned</b>
     <ul class="mob-plan">
       <li><span class="c-violet">${I(ICON2.trend, 17, 1.8)}</span><div><b>Insights that matter</b><small>Get the updates that matter to your business, the moment they happen.</small></div></li>
@@ -1296,7 +1296,7 @@ function bindAgentExtras() {
     if (num.length < 6) { $('#waHelp').textContent = 'Enter your phone number without the country code.'; $('#waHelp').classList.add('is-error'); return $('#waNumber').focus() }
     const full = `${$('#waCountry').value} ${$('#waNumber').value.trim()}`
     closeAgModal(); track('click', 'agent:whatsapp-saved')
-    toast(`Saved ${full}. Message Quayside Agent on WhatsApp any time.`)
+    toast(`Saved ${full}. Message Hostinger Agent on WhatsApp any time.`)
   })
   ag.addEventListener('input', e => {
     if (e.target.id === 'skillSearch') {
@@ -1337,7 +1337,7 @@ function pageGpu() {
     </section>
     <div class="gpu-feats">
       ${feat(ICON.sparkle, 'Run AI projects without limits', 'Train models, run inference, and process large datasets with dedicated GPU resources. Scale on demand without managing hardware.')}
-      ${feat('<circle cx="12" cy="12" r="9"/><path d="M12 12l4-4M7 15a6 6 0 0 1 10 0"/>', 'Launch GPU instances in seconds', 'Create and start GPU instances from Quayside in a few clicks. Skip lengthy setup and get your workloads running faster.')}
+      ${feat('<circle cx="12" cy="12" r="9"/><path d="M12 12l4-4M7 15a6 6 0 0 1 10 0"/>', 'Launch GPU instances in seconds', 'Create and start GPU instances from Hostinger in a few clicks. Skip lengthy setup and get your workloads running faster.')}
       ${feat('<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>', 'Power demanding workloads', 'Handle rendering, large AI models, and parallel processing tasks with dedicated GPU performance built for compute-heavy workloads.')}
     </div>
     <div class="gpu-head" id="gpuList"><h2>Choose GPU instance</h2>
@@ -1385,12 +1385,12 @@ function pageApi() {
         <div class="api-main">
           <div class="api-main__head">${logo(a.tool, color, 30)}<b>Connect ${esc(a.tool)}</b>
             <div class="seg seg--text"><button class="${a.mode === 'one' ? 'is-on' : ''}" data-apimode="one">One-click install</button><button class="${a.mode === 'manual' ? 'is-on' : ''}" data-apimode="manual">Manual setup</button></div></div>
-          ${a.mode === 'one' ? `<div class="api-install"><div><b>Install</b><p>Opens ${esc(a.tool)} with a prompt that installs the Quayside plugin.</p>
+          ${a.mode === 'one' ? `<div class="api-install"><div><b>Install</b><p>Opens ${esc(a.tool)} with a prompt that installs the Hostinger plugin.</p>
               <small>${I(ICON2.lockS, 12, 1.8)}No API key needed <span>${I('<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>', 12, 1.8)}macOS, Windows and Linux</span></small></div>
             <button class="btn btn-primary">Install in ${esc(a.tool)} ${I(ICON2.ext, 14, 2)}</button></div>`
-          : `<div class="api-manual"><b>Add the Quayside MCP server</b><p>Paste this into ${esc(a.tool)}'s MCP settings, then sign in when asked.</p>
-              <div class="api-code"><code>{ "mcpServers": { "quayside": { "url": "https://mcp.quayside.app/sse" } } }</code><button class="btn-outline btn-outline--sm" data-copy='{ "mcpServers": { "quayside": { "url": "https://mcp.quayside.app/sse" } } }'>Copy</button></div></div>`}
-          <div class="api-demo"><b>What you can do</b><p>Approve the Quayside sign-in once, then ask your agent in plain words.</p>
+          : `<div class="api-manual"><b>Add the Hostinger MCP server</b><p>Paste this into ${esc(a.tool)}'s MCP settings, then sign in when asked.</p>
+              <div class="api-code"><code>{ "mcpServers": { "hostinger": { "url": "https://mcp.hostinger.com/sse" } } }</code><button class="btn-outline btn-outline--sm" data-copy='{ "mcpServers": { "hostinger": { "url": "https://mcp.hostinger.com/sse" } } }'>Copy</button></div></div>`}
+          <div class="api-demo"><b>What you can do</b><p>Approve the Hostinger sign-in once, then ask your agent in plain words.</p>
             <div class="api-chat"><div class="api-chat__head"><span>${esc(a.tool)}</span><em>Example</em></div>
               <div class="api-chat__body" id="apiChat"></div>
               <div class="api-chat__input"><span>Ask your agent anything</span>${I('<path d="M12 19V5M5 12l7-7 7 7"/>', 14, 2)}</div></div></div>
@@ -1406,7 +1406,7 @@ function pageApi() {
 function apiTokens() {
   const list = app.apiTokens || []
   return `<section class="pg-card api-tokens">
-    <div class="api-tokens__head"><div><b>API tokens</b><p>Use a token to call the Quayside API from your own scripts.</p></div><button class="btn btn-primary btn-sm" data-newtoken>Create token</button></div>
+    <div class="api-tokens__head"><div><b>API tokens</b><p>Use a token to call the Hostinger API from your own scripts.</p></div><button class="btn btn-primary btn-sm" data-newtoken>Create token</button></div>
     ${list.length ? `<ul class="api-tokens__list">${list.map((t, i) => `<li><code>${esc(t.key)}</code><span>${esc(t.name)} · created ${esc(t.date)}</span><button class="link small" data-deltoken="${i}">Delete</button></li>`).join('')}</ul>` : '<p class="api-tokens__empty">No tokens yet.</p>'}
   </section>`
 }
@@ -1440,7 +1440,7 @@ function pageRouter() {
     ['<path d="M4 7h14l-3-3M20 17H6l3 3"/>', 'Switch models without touching your code', 'OpenAI SDK compatible, so you can change models without rewriting your app.'],
     ['<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/>', 'Pay only for what you use', "Credits are metered per request, so you're never locked into a fixed monthly cost."],
     ['<path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/>', 'Cut costs with prompt caching', 'Repeated content is served from cache automatically, so heavy usage costs less over time.'],
-    ['<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>', 'Connect to your AI apps instantly', 'Works automatically with OpenClaw and Hermes Agent in Quayside. No extra keys, no extra setup.'],
+    ['<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>', 'Connect to your AI apps instantly', 'Works automatically with OpenClaw and Hermes Agent in Hostinger. No extra keys, no extra setup.'],
     ['<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>', 'Track spend as you go', 'See credits used, tokens processed, and cache savings in one place, so nothing is a surprise.'],
   ]
   const card = (ic, h, p) => `<article class="gpu-feat"><span class="gpu-feat__icon">${I(ic, 18, 1.8)}</span><h3 class="light">${h}</h3><p>${p}</p></article>`
@@ -1459,7 +1459,7 @@ function pageRouter() {
     <div class="gpu-feats">
       ${card('<circle cx="8" cy="15" r="4"/><path d="m11 12 9-9M17 6l3 3M15 8l2 2"/>', 'One API for every model', 'Access GPT, Claude, DeepSeek, Grok and more through a single API key. Works with tools you already use.')}
       ${card('<path d="M9 3h6l-1.5 4h-3zM6 21h12a2 2 0 0 0 2-2c0-5-3.5-10-8-10S4 14 4 19a2 2 0 0 0 2 2z"/><path d="M12 12v6"/>', 'Price and performance', 'Pick the right model for each job and pay from one shared pool of AI credits, so you keep spend under control without giving up speed.')}
-      ${card('<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>', 'Built-in integration', 'Connects automatically to Quayside AI apps like OpenClaw and Hermes Agent. No extra keys, no extra setup.')}
+      ${card('<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>', 'Built-in integration', 'Connects automatically to Hostinger AI apps like OpenClaw and Hermes Agent. No extra keys, no extra setup.')}
     </div>
     <h2 class="rt-title" id="rtPacks">Top up your credits</h2>
     <div class="ecom__grid rt-grid">
@@ -1467,7 +1467,7 @@ function pageRouter() {
       <div class="ecom__buy">
         <div class="ecom__opts" role="radiogroup" aria-label="Credit pack">
           <div class="ecom__popular">Recommended</div>
-          ${packs.map(([n, p], i) => `<button role="radio" aria-checked="${app.routerPick === n}" class="ecom__opt rt-opt ${i ? 'ecom__opt--plain' : ''} ${app.routerPick === n ? 'is-on' : ''}" data-pack="${n}"><span class="radio"></span><b>Quayside Credits ${n}</b><strong class="rt-price">${p}</strong></button>`).join('')}
+          ${packs.map(([n, p], i) => `<button role="radio" aria-checked="${app.routerPick === n}" class="ecom__opt rt-opt ${i ? 'ecom__opt--plain' : ''} ${app.routerPick === n ? 'is-on' : ''}" data-pack="${n}"><span class="radio"></span><b>Hostinger Credits ${n}</b><strong class="rt-price">${p}</strong></button>`).join('')}
         </div>
         <button class="btn btn-primary rt-buy">Purchase credits</button>
         <p class="ecom__fine">Prices exclude taxes</p>
@@ -1629,7 +1629,7 @@ function pageAiApps(key) {
           <h3>Interface &amp; access</h3>
           <ul>${feature('Visual interface included')}${feature('CLI access included', 'Prefer the terminal? Connect over SSH any time.')}</ul>
           <h3>AI capabilities</h3>
-          <ul>${feature('AI credits included')}${feature('Web search included', 'Your agent can search the web for up-to-date answers.')}${feature('Works with ChatGPT subscription', 'Sign in with your ChatGPT Plus or Pro account instead of paying for an API key.')}${feature('Works with Quayside Connector', 'Lets your agent manage your Quayside websites, domains and email.')}</ul>
+          <ul>${feature('AI credits included')}${feature('Web search included', 'Your agent can search the web for up-to-date answers.')}${feature('Works with ChatGPT subscription', 'Sign in with your ChatGPT Plus or Pro account instead of paying for an API key.')}${feature('Works with Hostinger Connector', 'Lets your agent manage your Hostinger websites, domains and email.')}</ul>
           <div class="aa-guar"><span>${I(ICON2.shield, 15, 1.8)}30-day money-back guarantee</span><i></i><span>${I('<path d="M4 14v-2a8 8 0 0 1 16 0v2M4 14a2 2 0 0 1 2-2h1v6H6a2 2 0 0 1-2-2zM20 14a2 2 0 0 0-2-2h-1v6h1a2 2 0 0 0 2-2z"/>', 15, 1.8)}24/7 support</span></div>
         </div>
       </div>
@@ -1637,7 +1637,7 @@ function pageAiApps(key) {
 
     <section class="aa-power">
       <h2 class="aa-h2 aa-center">Power your agent your way</h2>
-      <p class="aa-sub">Choose how your agent connects to AI. Use the ChatGPT subscription you already have, top up Quayside AI credits, or bring your own key.</p>
+      <p class="aa-sub">Choose how your agent connects to AI. Use the ChatGPT subscription you already have, top up Hostinger AI credits, or bring your own key.</p>
       <div class="aa-power__grid">
         <article class="aa-pow"><div class="aa-pow__top"><span class="gpu-feat__icon">${I('<circle cx="5" cy="12" r="2"/><path d="M7 12h4l4-5h4M11 12l4 5h4M17 5l2 2-2 2M17 15l2 2-2 2"/>', 18, 1.8)}</span><em class="tag-violet">Recommended</em></div>
           <h3>AI Router</h3><p>Top up AI credits and choose from a variety of AI models. No separate accounts or providers.</p><div class="aa-rec">Works with ${appDots(['openclaw', 'hermes', 'n8n'])}</div></article>
@@ -1991,7 +1991,7 @@ function setView(v, { focus = true, push = true } = {}) {
   document.documentElement.classList.toggle('agent-open', open)
   $('#agentBtn').classList.toggle('is-on', open)
   syncNav()
-  document.title = open ? 'Quayside — Agent' : `Quayside — ${PAGE_TITLES[app.page] || 'Websites'}`
+  document.title = open ? 'Hostinger — Agent' : `Hostinger — ${PAGE_TITLES[app.page] || 'Websites'}`
   const pageHash = app.page === 'home' ? '' : '#' + app.page
   if (push && location.hash !== (open ? '#agent' : pageHash)) history.pushState(null, '', open ? '#agent' : (pageHash || location.pathname + location.search))
   if (changed && open) { track('view', 'agent-page'); scrollChat(); maybeAskMemory() }

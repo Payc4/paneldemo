@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
-  <title>Live editor — Quayside</title>
+  <title>Live editor — Hostinger</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap">
@@ -16,7 +16,7 @@
   <!-- login / off -->
   <main class="gate" id="gate" hidden>
     <form class="gate__box" id="loginForm">
-      <span class="mark" aria-hidden="true"><svg width="36" height="36" viewBox="0 0 28 28"><rect width="28" height="28" rx="8" fill="#673DE6"/><path d="M6 17c2.7-3.6 5.3-3.6 8 0s5.3 3.6 8 0" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><circle cx="20" cy="9" r="2" fill="#fff"/></svg></span>
+      <span class="mark" aria-hidden="true"><svg width="36" height="36" viewBox="0 0 28 28"><rect width="28" height="28" rx="8" fill="#673DE6"/><path transform="translate(6.58 6.5) scale(.5)" fill-rule="evenodd" clip-rule="evenodd" d="M2.00025 14.046V0.000497794L9.08916 3.78046V10.1086L18.4735 10.1132L25.6774 14.046H2.00025ZM20.3925 8.95058V0L27.6725 3.6859V13.1797L20.3925 8.95058ZM20.3924 26.1177V19.8441L10.9358 19.8375C10.9446 19.8793 3.6123 15.8418 3.6123 15.8418L27.6725 15.9547V30L20.3924 26.1177ZM2 26.1177L2.00025 16.9393L9.08916 21.0683V29.8033L2 26.1177Z" fill="#fff"/></svg></span>
       <h1>Live editor</h1>
       <p id="gateText">Enter the editor password to change <b id="gateSlug"></b>.</p>
       <div id="gateFields">
@@ -31,7 +31,7 @@
   <!-- editor -->
   <div class="ed" id="ed" hidden>
     <header class="bar">
-      <span class="mark" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 28 28"><rect width="28" height="28" rx="8" fill="#673DE6"/><path d="M6 17c2.7-3.6 5.3-3.6 8 0s5.3 3.6 8 0" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><circle cx="20" cy="9" r="2" fill="#fff"/></svg></span>
+      <span class="mark" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 28 28"><rect width="28" height="28" rx="8" fill="#673DE6"/><path transform="translate(6.58 6.5) scale(.5)" fill-rule="evenodd" clip-rule="evenodd" d="M2.00025 14.046V0.000497794L9.08916 3.78046V10.1086L18.4735 10.1132L25.6774 14.046H2.00025ZM20.3925 8.95058V0L27.6725 3.6859V13.1797L20.3925 8.95058ZM20.3924 26.1177V19.8441L10.9358 19.8375C10.9446 19.8793 3.6123 15.8418 3.6123 15.8418L27.6725 15.9547V30L20.3924 26.1177ZM2 26.1177L2.00025 16.9393L9.08916 21.0683V29.8033L2 26.1177Z" fill="#fff"/></svg></span>
       <b class="bar__title">Live editor</b>
       <label class="sr-only" for="verSel">Version</label>
       <select id="verSel" class="sel"></select>
@@ -74,7 +74,7 @@
     <p id="mcpOff">The connector is switched off. Add a long random <code>MCP_TOKEN</code> in Coolify (runtime variable) and redeploy to turn it on.</p>
     <ol id="mcpSteps">
       <li>In claude.ai open <b>Settings → Connectors → Add custom connector</b>.</li>
-      <li>Name: <b>Quayside editor</b>. URL: <code id="mcpUrl"></code> <button class="link" id="copyMcp">Copy</button></li>
+      <li>Name: <b>Hostinger editor</b>. URL: <code id="mcpUrl"></code> <button class="link" id="copyMcp">Copy</button></li>
       <li>Under authentication add a request header <code>Authorization</code> with the value <code>Bearer</code> + your MCP_TOKEN. If your Claude app has no header field, use the URL <code>…/mcp/&lt;your MCP_TOKEN&gt;</code> with “No sign in” instead.</li>
       <li>Open the live preview next to Claude: <a id="liveUrl" target="_blank" rel="noopener"></a> — it reloads by itself after every change.</li>
       <li>In a chat, turn the connector on and ask, e.g. “On hpanel1, add a first deals slide about connecting AI tools.”</li>
